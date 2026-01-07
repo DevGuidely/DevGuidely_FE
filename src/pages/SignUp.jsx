@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useState } from "react";
 import TopNav from '../components/TopNav.jsx';
-import '../styles/auth.css';
 import { registerApi } from "../api/api";
 
 export default function SignPage() {
