@@ -1,0 +1,156 @@
+:root {
+  --text: #111;
+  --muted: rgba(0, 0, 0, 0.55);
+  --line: rgba(0, 0, 0, 0.28);
+  --chip: #dfe7f5;
+  --bg: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.bg {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  padding: 56px 72px;
+}
+
+/* 배경 그라데이션 (이미지 느낌 재현) */
+.bg::before {
+  content: "";
+  position: absolute;
+  inset: -120px;
+  background:
+    radial-gradient(900px 900px at 25% 65%, rgba(255, 224, 140, 0.55), rgba(255, 224, 140, 0.0) 60%),
+    radial-gradient(900px 900px at 68% 60%, rgba(255, 170, 210, 0.55), rgba(255, 170, 210, 0.0) 60%),
+    radial-gradient(1100px 1100px at 50% 30%, rgba(240, 240, 240, 0.65), rgba(240, 240, 240, 0.0) 60%);
+  filter: blur(2px);
+  z-index: 0;
+}
+
+.bg > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* 오른쪽 상단 Login | Sign Up */
+.top-nav {
+  position: absolute;
+  top: 22px;
+  right: 40px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 16px;
+  letter-spacing: 0.2px;
+}
+
+.top-link {
+  opacity: 0.85;
+}
+
+.top-link:hover {
+  opacity: 1;
+}
+
+.top-link.active {
+  font-weight: 700;
+  opacity: 1;
+}
+
+.top-sep {
+  opacity: 0.7;
+}
+
+.welcome-bar {
+  position: absolute;
+  top:10px;
+  right: 24px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px; /* ← 둘 사이 간격 */
+
+  font-size: 14px;
+}
+
+.logout-btn {
+  background: transparent;
+  border: 1px solid #ccc;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+
+
+/* 메인 히어로 */
+.hero {
+  margin-top: 190px;
+  max-width: 720px;
+}
+
+.hero-title {
+  font-size: 88px;
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.hero-sub {
+  margin: 18px 0 0;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.btn-start {
+  margin-top: 120px;
+  padding: 14px 44px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--chip);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.btn-start:hover {
+  filter: brightness(0.98);
+}
+
+/* 반응형 */
+@media (max-width: 900px) {
+  .bg {
+    padding: 44px 28px;
+  }
+
+  .hero {
+    margin-top: 140px;
+  }
+
+  .hero-title {
+    font-size: 56px;
+  }
+
+  .hero-sub {
+    font-size: 20px;
+  }
+
+  .btn-start {
+    margin-top: 80px;
+  }
+}
