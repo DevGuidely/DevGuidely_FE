@@ -1,7 +1,5 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState } from "react";
-import TopNav from '../components/TopNav.jsx';
-import { MdCheckBoxOutlineBlank } from "react-icons/md";
 import { loginApi } from "../api/api";
 
 export default function Login() {
@@ -42,7 +40,7 @@ export default function Login() {
           <div className='fontSB mt-[5%] text-[30px]'>Login</div>
           <div className='flex justify-center items-center w-full mt-[0.7%]'>
             <div className='fontLight text-[16px]'>가입한 계정이 없으신가요?</div>
-            <div className='fontLight text-[16px] underline ml-[1%]'>Sign up</div>
+            <Link to="/signup" className='fontLight text-[16px] text-[#1e1e1e] hover:no-underline underline ml-[1%]'>Sign up</Link>
           </div>
         </div>
 
