@@ -9,6 +9,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   
   const [rememberMe, setRememberMe] = useState(false);
+  const [loginError, setLoginError] = useState("");
   
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isEmailValid = emailRegex.test(email);
@@ -21,15 +22,15 @@ export default function Login() {
 
   async function handleLogin() {
     try {
+      setLoginError(""); // 이전 에러 초기화
+
       const result = await loginApi({ email, password, rememberMe });
       localStorage.setItem("accessToken", result.accessToken);
       localStorage.setItem("rememberMe", rememberMe ? "true" : "false");
 
-      alert("로그인 성공");
-      console.log(result);
       navigate("/");
     } catch (e) {
-      alert(e.message);
+      setLoginError(e.message || "로그인에 실패했습니다.");
     }
   }
 
@@ -99,6 +100,14 @@ export default function Login() {
               로그인
             </button>
           </div>
+
+          {loginError && (
+            <div className="flex justify-center w-full mt-[1%]">
+              <div className="text-[13px] text-[#E86666] fontRegular">
+                {loginError}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
