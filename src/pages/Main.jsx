@@ -15,6 +15,15 @@ export default function Main() {
       navigate("/");
   }
 
+  function handleStartClick() {
+    if (!isLoggedIn) {
+      navigate("/login");
+      return;
+    }
+
+    navigate("/");
+  }
+
   return (
     <div className='bg-gradient-soft'>
       <div className='bg-gradient-content'>
@@ -36,10 +45,13 @@ export default function Main() {
           <div className='fontEB text-[80px]'>DevGuidely</div>
           <div className='flex fontRegular text-[20px]'>설명~</div>
 
-          <div className='flex items-center mt-[17%]'>
-            <div className='fontRegular text-[25px]'>Start</div>
-            <IoArrowForwardOutline className='ml-[1%]' />
-          </div>
+          <button
+            onClick={handleStartClick}
+            className="flex bg-transparent items-center border-none w-full items-center mt-[17%] cursor-pointer"
+          >
+            <div className="fontRegular text-[25px]">Start</div>
+            <IoArrowForwardOutline className="ml-[1%] text-[20px]" />
+          </button>
         </div>
       </div>
     </div>

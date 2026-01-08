@@ -12,6 +12,7 @@ export default function SignUp() {
   const [isVerified, setIsVerified] = useState(false);
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [signupError, setSignupError] = useState("");
   
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isEmailValid = emailRegex.test(email);
@@ -39,21 +40,23 @@ export default function SignUp() {
     password === passwordConfirm;
 
   async function handleRegister() {
-    try {
-      const result = await registerApi({ email, password, name});
-      alert("회원가입 성공");
-      console.log(result);
-      navigate("/login");
-    } catch (e) {
-      alert(e.message);
-    }
+  try {
+    setSignupError(""); // 이전 에러 초기화
+
+    const result = await registerApi({ email, password, name });
+    console.log(result);
+    navigate("/login");
+  } catch (e) {
+    setSignupError(e.message || "회원가입에 실패했습니다.");
   }
+}
+
 
   return (
     <div className='bg-gradient-soft'>
       <div className='bg-gradient-content'>
         <div className='flex w-full flex-col items-center w-[50%]'>
-          <div className='fontSB mt-[5%] text-[30px]'>Create an account</div>
+          <div className='fontSB mt-[3.5%] text-[30px]'>Create an account</div>
           <div className='flex justify-center items-center w-full mt-[0.7%]'>
             <div className='fontLight text-[16px]'>이미 가입한 계정이 있으신가요?</div>
             <Link to="/login" className='fontLight text-[16px] text-[#1e1e1e] hover:no-underline underline ml-[1%]'>Log in</Link>
@@ -180,6 +183,13 @@ export default function SignUp() {
               >
                 회원가입
               </button>
+            </div>
+          )}
+          {signupError && (
+            <div className="flex justify-center w-full mt-[1%]">
+              <div className="text-[13px] text-[#E86666] fontRegular">
+                {signupError}
+              </div>
             </div>
           )}
         </div>
