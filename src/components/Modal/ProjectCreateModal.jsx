@@ -31,7 +31,7 @@ export default function ProjectCreateModal({ isOpen, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* 배경 오버레이 */}
       <div 
-        className="absolute inset-0 bg-[#1E1E1E] bg-opacity-52"
+        className="absolute inset-0 bg-[#1E1E1E] bg-opacity-[85%]"
         onClick={onClose}
       />
       

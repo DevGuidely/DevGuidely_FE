@@ -94,7 +94,7 @@ export default function ProjectList() {
 
             <div 
               onClick={handleModalOpen}
-              className="text-[12px] bg-project-create fontRegular px-4 py-1 rounded-2xl cursor-pointer hover:opacity-90 transition"
+              className="text-[12px] bg-project-create fontRegular px-4 py-1 rounded-2xl cursor-pointer hover:opacity-50 transition"
             >
               + 프로젝트 생성
             </div>
