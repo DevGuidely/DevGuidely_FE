@@ -27,6 +27,7 @@ export default function Login() {
       const result = await loginApi({ email, password, rememberMe });
       localStorage.setItem("accessToken", result.accessToken);
       localStorage.setItem("rememberMe", rememberMe ? "true" : "false");
+      localStorage.setItem("user", JSON.stringify(result.user));
 
       navigate("/");
     } catch (e) {
