@@ -2,6 +2,7 @@ import React from 'react'
 import TopNav from '../components/TopNav';
 import { useNavigate } from 'react-router-dom';
 import { IoArrowForwardOutline } from "react-icons/io5";
+import ProjectList from './Project/ProjectList';
 
 export default function Main() {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ export default function Main() {
       return;
     }
 
-    navigate("/");
+    navigate("/projectList");
   }
 
   return (
