@@ -1,75 +1,74 @@
 @font-face {
   font-family: "Pretendard-Black";
-  src: url("/assets//fonts/Pretendard-Black.otf") format("opentype");
+  src: url("../../public//assets//fonts/Pretendard-Black.otf") format("woff");
 }
 @font-face {
   font-family: "Pretendard-ExtraBold";
-  src: url("/assets//fonts/Pretendard-ExtraBold.otf")
-    format("opentype");
+  src: url("../../public//assets//fonts/Pretendard-ExtraBold.otf")
+    format("woff");
 }
 @font-face {
   font-family: "Pretendard-Bold";
-  src: url("/assets//fonts/Pretendard-Bold.otf") format("opentype");
+  src: url("../../public//assets//fonts/Pretendard-Bold.otf") format("woff");
 }
 @font-face {
   font-family: "Pretendard-SemiBold";
-  src: url("/assets//fonts/Pretendard-SemiBold.otf") format("opentype");
+  src: url("../../public//assets//fonts/Pretendard-SemiBold.otf") format("woff");
 }
 @font-face {
   font-family: "Pretendard-Medium";
-  src: url("/assets//fonts/Pretendard-Medium.otf") format("opentype");
+  src: url("../../public//assets//fonts/Pretendard-Medium.otf") format("woff");
 }
 @font-face {
   font-family: "Pretendard-Regular";
-  src: url("/assets//fonts/Pretendard-Regular.otf") format("opentype");
+  src: url("../../public//assets//fonts/Pretendard-Regular.otf") format("woff");
 }
 @font-face {
   font-family: "Pretendard-Light";
-  src: url("/assets//fonts/Pretendard-Light.otf") format("opentype");
+  src: url("../../public//assets//fonts/Pretendard-Light.otf") format("woff");
 }
 @font-face {
   font-family: "Pretendard-ExtraLight";
-  src: url("/assets//fonts/Pretendard-ExtraLight.otf") format("opentype");
+  src: url("../../public//assets//fonts/Pretendard-ExtraLight.otf")
+    format("woff");
 }
 @font-face {
   font-family: "Pretendard-Thin";
-  src: url("/assets//fonts/Pretendard-Thin.otf") format("opentype");
+  src: url("../../public//assets//fonts/Pretendard-Thin.otf") format("woff");
 }
 
-@layer utilities {
-  .fontBlack {
-    font-family: "Pretendard-Black";
-  }
+.fontBlack {
+  font-family: "Pretendard-Black";
+}
 
-  .fontEB {
-    font-family: "Pretendard-ExtraBold";
-  }
+.fontEB {
+  font-family: "Pretendard-ExtraBold";
+}
 
-  .fontBold {
-    font-family: "Pretendard-Bold";
-  }
+.fontBold {
+  font-family: "Pretendard-Bold";
+}
 
-  .fontSB {
-    font-family: "Pretendard-SemiBold";
-  }
+.fontSB {
+  font-family: "Pretendard-SemiBold";
+}
 
-  .fontMedium {
-    font-family: "Pretendard-Medium";
-  }
+.fontMedium {
+  font-family: "Pretendard-Medium";
+}
 
-  .fontRegular {
-    font-family: "Pretendard-Regular";
-  }
+.fontRegular {
+  font-family: "Pretendard-Regular";
+}
 
-  .fontLight {
-    font-family: "Pretendard-Light";
-  }
+.fontLight {
+  font-family: "Pretendard-Light";
+}
 
-  .fontEL {
-    font-family: "Pretendard-ExtraLight";
-  }
+.fontEL {
+  font-family: "Pretendard-ExtraLight";
+}
 
-  .fontThin {
-    font-family: "Pretendard-Thin";
-  }
+.fontThin {
+  font-family: "Pretendard-Thin";
 }

@@ -2,6 +2,7 @@ import React from 'react'
 import TopNav from '../components/TopNav';
 import { useNavigate } from 'react-router-dom';
 import { IoArrowForwardOutline } from "react-icons/io5";
+import ProjectList from './Project/ProjectList';
 
 export default function Main() {
   const navigate = useNavigate();
@@ -13,6 +14,15 @@ export default function Main() {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("user");
       navigate("/");
+  }
+
+  function handleStartClick() {
+    if (!isLoggedIn) {
+      navigate("/login");
+      return;
+    }
+
+    navigate("/projectList");
   }
 
   return (
@@ -36,10 +46,13 @@ export default function Main() {
           <div className='fontEB text-[80px]'>DevGuidely</div>
           <div className='flex fontRegular text-[20px]'>설명~</div>
 
-          <div className='flex items-center mt-[17%]'>
-            <div className='fontRegular text-[25px]'>Start</div>
-            <IoArrowForwardOutline className='ml-[1%]' />
-          </div>
+          <button
+            onClick={handleStartClick}
+            className="flex bg-transparent items-center border-none w-full items-center mt-[17%] cursor-pointer"
+          >
+            <div className="fontRegular text-[25px]">Start</div>
+            <IoArrowForwardOutline className="ml-[1%] text-[20px]" />
+          </button>
         </div>
       </div>
     </div>

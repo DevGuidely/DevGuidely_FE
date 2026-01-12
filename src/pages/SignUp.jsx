@@ -13,6 +13,7 @@ export default function SignUp() {
   const [isVerified, setIsVerified] = useState(false);
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [signupError, setSignupError] = useState("");
   
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isEmailValid = emailRegex.test(email);
@@ -64,12 +65,14 @@ export default function SignUp() {
       alert(e.message);
     }
   }
+}
+
 
   return (
     <div className='bg-gradient-soft'>
       <div className='bg-gradient-content'>
         <div className='flex w-full flex-col items-center w-[50%]'>
-          <div className='fontSB mt-[5%] text-[30px]'>Create an account</div>
+          <div className='fontSB mt-[3.5%] text-[30px]'>Create an account</div>
           <div className='flex justify-center items-center w-full mt-[0.7%]'>
             <div className='fontLight text-[16px]'>이미 가입한 계정이 있으신가요?</div>
             <Link to="/login" className='fontLight text-[16px] text-[#1e1e1e] hover:no-underline underline ml-[1%]'>Log in</Link>
@@ -202,8 +205,14 @@ export default function SignUp() {
               </button>
             </div>
           )}
+          {signupError && (
+            <div className="flex justify-center w-full mt-[1%]">
+              <div className="text-[13px] text-[#E86666] fontRegular">
+                {signupError}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
-  )
-}
+  );

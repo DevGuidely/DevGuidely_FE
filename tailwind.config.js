@@ -1,15 +1,16 @@
 /** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,jsx,ts,tsx}",
-  ],
-  theme: {
-    extend: {
-      fontFamily: {
-        pretendard: ["Pretendard", "system-ui", "sans-serif"],
-      },
+import { colors } from "./src/css/colors";
+
+export const content = [
+  "./index.html",
+  "./src/**/*.{js,jsx,ts,tsx}",
+];
+export const theme = {
+  extend: {
+    colors,
+    fontFamily: {
+      pretendard: ["Pretendard", "system-ui", "sans-serif"],
     },
   },
-  plugins: [],
-}
+};
+export const plugins = [];
