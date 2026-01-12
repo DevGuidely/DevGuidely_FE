@@ -1,12 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from "react";
-import { registerApi } from "../api/api";
+import { registerApi, sendEmailCodeApi, verifyEmailCodeApi } from "../api/api";
 
 export default function SignUp() {
   const navigate = useNavigate();
     
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [verifiedToken, setVerifiedToken] = useState(null);
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [authCode, setAuthCode] = useState("");
   const [isVerified, setIsVerified] = useState(false);
@@ -19,19 +20,34 @@ export default function SignUp() {
   const isEmailEnabled = email.trim() !== "" && isEmailValid;
   const isAuthCodeEnabled = authCode.trim() !== "";
 
-  function handleButtonClick() {
-    // 아직 인증번호를 안 보낸 상태
+  async function handleButtonClick() {
+    // 인증번호 요청
     if (!isCodeSent) {
       if (!isEmailEnabled) return;
-      setIsCodeSent(true);
+  
+      try {
+        await sendEmailCodeApi(email);
+        alert("인증번호가 이메일로 전송되었습니다.");
+        setIsCodeSent(true);
+      } catch (e) {
+        alert(e.message);
+      }
       return;
     }
-
-    // 인증번호 입력 후 → 인증 완료
+  
+    // 인증번호 검증
     if (isAuthCodeEnabled) {
-      setIsVerified(true);
+      try {
+        const res = await verifyEmailCodeApi({ email, code: authCode });
+        setVerifiedToken(res.verifiedToken);
+        alert("이메일 인증이 완료되었습니다.");
+        setIsVerified(true);
+      } catch (e) {
+        alert(e.message);
+      }
     }
   }
+
 
   const isSignupEnabled =
     password.trim() !== "" &&
@@ -40,7 +56,7 @@ export default function SignUp() {
 
   async function handleRegister() {
     try {
-      const result = await registerApi({ email, password, name});
+      const result = await registerApi({ email, password, name, verifiedToken});
       alert("회원가입 성공");
       console.log(result);
       navigate("/login");
@@ -83,9 +99,11 @@ export default function SignUp() {
             </div>
             <input 
               type="text" 
-              placeholder='Email@gmail.com' 
+              placeholder='email@naver.com' 
               value={email}
-              onChange={(e) => setEmail(e.target.value)} 
+              onChange={(e) => {
+                setEmail(e.target.value);
+              }} 
               className='bg-transparent px-[2%] py-[1.6%] mt-[1.3%] rounded-[15px] border-[1px] border-[#666]' 
             />
           </div>
@@ -96,7 +114,9 @@ export default function SignUp() {
                 type="text"
                 placeholder="인증번호를 입력하세요"
                 value={authCode}
-                onChange={(e) => setAuthCode(e.target.value)}
+                onChange={(e) => {
+                  setAuthCode(e.target.value);
+                }}
                 className="bg-transparent px-[2%] py-[1.6%] mt-[1.3%] rounded-[15px] border-[1px] border-[#666]"
               />
             </div>
