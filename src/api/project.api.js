@@ -1,104 +1,94 @@
 /* 백엔드 통신 코드
 역할:
-  1. 프로젝트 관련 백엔드 API 호출 담당
+  1. Planning 관련 백엔드 API 호출 담당
 상관관계:
-  1. ProjectCreateModal.jsx
-  2. project.controller → project.service
+  1. PlanningDetail.jsx
+  2. project.controller → planning.service
 */
 import axios from 'axios';
 
-const BASE_URL = "http://localhost:4000";
+const BASE_URL = 'http://localhost:4000';
 
-const projectApi = axios.create({
+const planningApi = axios.create({
   baseURL: BASE_URL,
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
   },
   timeout: 10000,
 });
 
-projectApi.interceptors.request.use(
-  (config) => {
+planningApi.interceptors.request.use(
+  config => {
     const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  error => Promise.reject(error)
 );
 
-projectApi.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error) => {
-    const message = error.response?.data?.message || error.message;
-    console.error('❌ Project API 에러:', {
+planningApi.interceptors.response.use(
+  response => response,
+  error => {
+    const message =
+      error.response?.data?.message || error.message;
+
+    console.error('❌ Planning API 에러:', {
       status: error.response?.status,
-      message: message,
-      data: error.response?.data
+      message,
+      data: error.response?.data,
     });
-    
+
     if (error.response?.status === 401) {
       localStorage.removeItem('accessToken');
     }
-    
+
     throw new Error(message);
   }
 );
 
-export async function createProjectApi({ title, purpose }) {
+export async function savePlanningApi({ projectId, payload }) {
   try {
-    const response = await projectApi.post('/projects/create', {
-      title,
-      purpose
-    });
-    
-    return response.data;
-    
+    const response = await planningApi.post(
+      `/projects/${projectId}/planning`,
+      payload
+    );
+
+    return response.data; // { message: "Planning saved" }
   } catch (error) {
-    console.error('❌ 프로젝트 생성 실패:', error.message);
-    throw new Error(error.message || "프로젝트 생성 실패");
+    console.error('❌ Planning 저장 실패:', error.message);
+    throw new Error(error.message || 'Planning 저장 실패');
   }
 }
 
-export async function getProjectsApi() {
+export async function getPlanningApi({ projectId }) {
   try {
-    const response = await projectApi.get('/projects/list');
-    
+    const response = await planningApi.get(
+      `/projects/${projectId}/planning`
+    );
+
     return response.data;
-    
   } catch (error) {
-    console.error('❌ 프로젝트 목록 조회 실패:', error.message);
-    throw new Error(error.message || "프로젝트 목록 조회 실패");
+    console.error('❌ Planning 조회 실패:', error.message);
+    throw new Error(error.message || 'Planning 조회 실패');
   }
 }
 
-export async function deleteProjectApi(projectId) {
+export async function updateStepStatusApi({
+  projectId,
+  stepKey, // "planning" | "tech" | "dev" | "deploy"
+  status,  // "before" | "ing" | "done"
+}) {
   try {
-    const response = await projectApi.delete(`/projects/${projectId}`);
-    return response.data;
-    
-  } catch (error) {
-    console.error('❌ 프로젝트 삭제 실패:', error.message);
-    throw new Error(error.message || "프로젝트 삭제 실패");
-  }
-}
-
-export async function updateProjectApi({ projectId, title, purpose }) {
-  try {
-    const response = await projectApi.patch(`/projects/${projectId}`, {
-      title,
-      purpose
-    });
+    const response = await planningApi.patch(
+      `/projects/${projectId}/steps/${stepKey}`,
+      { status }
+    );
 
     return response.data;
-    
   } catch (error) {
-    console.error('❌ 프로젝트 수정 실패:', error.message);
-    throw new Error(error.message || "프로젝트 수정 실패");
+    console.error('❌ Step 상태 변경 실패:', error.message);
+    throw new Error(error.message || 'Step 상태 변경 실패');
   }
 }
