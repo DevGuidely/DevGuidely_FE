@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import MainNav from '../../components/MainNav'
 import ProgressCategoryButtons from '../../components/Button/ProgressCategoryButtons'
 import ProjectCreateModal from '../../components/Modal/ProjectCreateModal'
-import { mockProjectList } from '../../data/project.mock'
+
+import { getProjectsApi } from '../../api/project.api'
 import { MdDeleteOutline } from 'react-icons/md'
 
 const progressLabelMap = {
@@ -31,22 +32,43 @@ const chunkArray = (array, size) => {
 export default function ProjectList() {
   const [selectedStatus, setSelectedStatus] = useState('all')
   const [currentSlide, setCurrentSlide] = useState(0)
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentCompletedSlide, setCurrentCompletedSlide] = useState(0)
+
+  const [projects, setProjects] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        const data = await getProjectsApi();
+        // data가 배열일 수도 있고, { items, total } 형태일 수도 있으므로 안전하게 추출
+
+        const items = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : []);
++       setProjects(items);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    fetchProjects();
+  }, []);
 
   // 필터링: selectedStatus에 따라 프로젝트 분류 (진행완료 제외)
   const filteredItems = useMemo(() => {
+    const safeProjects = Array.isArray(projects) ? projects : [];
+
     if (selectedStatus === 'all') {
       // 'all'일 때도 진행완료는 제외
-      return mockProjectList.items.filter(item => item.progress !== 'done')
+      return safeProjects.filter(item => item.progress !== 'done')
     }
-    return mockProjectList.items.filter(item => item.progress === selectedStatus)
-  }, [selectedStatus])
+    return safeProjects.filter(item => item.progress === selectedStatus)
+  }, [selectedStatus, projects])
 
   // 진행완료 프로젝트만 필터링
   const completedProjects = useMemo(() => {
-    return mockProjectList.items.filter(item => item.progress === 'done')
-  }, [])
+    const safeProjects = Array.isArray(projects) ? projects : [];
+
+    return safeProjects.filter(item => item.progress === 'done')
+  }, [projects])
 
   // 슬라이드용 배열 생성 (3개씩 나누기, 빈 공간은 null로 채우지 않음)
   const slides = useMemo(() => {
@@ -71,6 +93,11 @@ export default function ProjectList() {
   const handleModalClose = () => {
     setIsModalOpen(false)
   }
+
+  //생성된 프로젝트를 state에 반영
+  const handleCreateProject = (newProject) => {
+    setProjects(prev => [...prev, newProject])
+  };
 
   return (
     <div>
@@ -298,6 +325,7 @@ export default function ProjectList() {
       <ProjectCreateModal 
         isOpen={isModalOpen} 
         onClose={handleModalClose}
+        onCreate={handleCreateProject}
       />
     </div>
   )

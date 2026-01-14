@@ -65,7 +65,6 @@ export default function SignUp() {
       alert(e.message);
     }
   }
-}
 
 
   return (
@@ -216,3 +215,4 @@ export default function SignUp() {
       </div>
     </div>
   );
+}

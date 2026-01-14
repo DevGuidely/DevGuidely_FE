@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { MdClose } from 'react-icons/md'
+import { createProjectApi } from '../../api/project.api.js'
 
-export default function ProjectCreateModal({ isOpen, onClose }) {
+export default function ProjectCreateModal({ isOpen, onClose, onCreate }) {
   const [projectData, setProjectData] = useState({
     title: '',
     purpose: '',
@@ -9,13 +10,21 @@ export default function ProjectCreateModal({ isOpen, onClose }) {
 
   if (!isOpen) return null
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // 여기에 프로젝트 생성 로직 추가
-    console.log('새 프로젝트:', projectData)
-    onClose()
-    // 폼 초기화
-    setProjectData({ title: '', purpose: '' })
+
+    // 프로젝트 생성 로직 추가
+    try {
+      const createdProject = await createProjectApi(projectData);
+
+      //부모컴포넌트에 새 프젝 전달
+      onCreate(createdProject);
+
+      onClose()
+      setProjectData({ title: "", purpose: ""});
+    } catch (err) {
+      alert(err.message);
+    }
   }
 
   const handleInputChange = (field, value) => {
@@ -25,7 +34,9 @@ export default function ProjectCreateModal({ isOpen, onClose }) {
     }))
   }
 
-  const isFormValid = projectData.title.trim() !== '' && projectData.purpose.trim() !== ''
+  const isFormValid = 
+  projectData.title.trim() !== '' &&
+  projectData.purpose.trim() !== '';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
