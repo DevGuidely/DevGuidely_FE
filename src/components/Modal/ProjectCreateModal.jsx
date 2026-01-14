@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { MdClose } from 'react-icons/md'
 import { createProjectApi } from '../../api/project.api.js'
 
 export default function ProjectCreateModal({ isOpen, onClose, onCreate }) {
@@ -8,106 +7,126 @@ export default function ProjectCreateModal({ isOpen, onClose, onCreate }) {
     purpose: '',
   })
 
+  const [isLoading, setIsLoading] = useState(false)
+
   if (!isOpen) return null
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (isLoading) return
 
-    // 프로젝트 생성 로직 추가
     try {
-      const createdProject = await createProjectApi(projectData);
+      setIsLoading(true)
 
-      //부모컴포넌트에 새 프젝 전달
-      onCreate(createdProject);
+      const response = await createProjectApi(projectData)
 
+      /**
+       * ✔️ 성공 판단 기준
+       * - 여기까지 왔다는 것은 axios 에러 / throw 가 없었다는 뜻
+       * - 즉, 서버는 정상 처리
+       */
+      const createdProject =
+        response?.data?.project ??
+        response?.data ??
+        null
+
+      // 👉 생성 객체가 없어도 성공으로 처리
+      if (createdProject) {
+        onCreate(createdProject)
+      } else {
+        // 생성 데이터가 없으면 부모에서 재조회하도록 신호만 줌
+        onCreate(null)
+      }
+
+      setProjectData({ title: '', purpose: '' })
       onClose()
-      setProjectData({ title: "", purpose: ""});
+
     } catch (err) {
-      alert(err.message);
+      console.error('❌ 프로젝트 생성 API 에러:', err)
+      alert('프로젝트 생성에 실패했습니다.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const handleInputChange = (field, value) => {
     setProjectData(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }))
   }
 
-  const isFormValid = 
-  projectData.title.trim() !== '' &&
-  projectData.purpose.trim() !== '';
+  const isFormValid =
+    projectData.title.trim() !== '' &&
+    projectData.purpose.trim() !== ''
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* 배경 오버레이 */}
-      <div 
+      <div
         className="absolute inset-0 bg-[#1E1E1E] bg-opacity-[85%]"
         onClick={onClose}
       />
-      
+
       {/* 모달 컨텐츠 */}
-      <div className="relative bg-[#fff] rounded-2xl shadow-xl w-[700px] max-w-[90vw] max-h-[90vh] p-10 overflow-hidden">
+      <div className="relative bg-white rounded-2xl shadow-xl w-[700px] max-w-[90vw] p-10">
         {/* 헤더 */}
-        <div className="flex justify-center items-center pt-6">
-          <div className="flex fontMedium text-[22px]">프로젝트 생성</div>
+        <div className="flex justify-center pt-6">
+          <div className="fontMedium text-[22px]">프로젝트 생성</div>
         </div>
 
         {/* 폼 */}
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="space-y-4">
-            {/* 프로젝트 제목 */}
-            <div>
-              <div className="fontRegular text-[#666666] text-[14px] mb-2">
-                프로젝트 제목
-              </div>
-              <input
-                type="text"
-                value={projectData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
-                placeholder="Project Name"
-                className="w-full px-4 py-3 border border-[#DFE7F4] rounded-xl fontRegular text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                required
-              />
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <div className="fontRegular text-[#666] text-[14px] mb-2">
+              프로젝트 제목
             </div>
-
-            {/* 프로젝트 목적 */}
-            <div>
-              <div className="fontRegular text-[#666666] text-[14px] mb-2">
-                프로젝트 간단 설명
-              </div>
-              <textarea
-                value={projectData.purpose}
-                onChange={(e) => handleInputChange('purpose', e.target.value)}
-                placeholder="Project Description"
-                rows={4}
-                className="w-full px-4 py-3 border border-[#DFE7F4] rounded-xl fontRegular text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white"
-                required
-              />
-            </div>
+            <input
+              type="text"
+              value={projectData.title}
+              onChange={(e) => handleInputChange('title', e.target.value)}
+              placeholder="Project Name"
+              disabled={isLoading}
+              className="w-full px-4 py-3 border rounded-xl text-[14px]"
+              required
+            />
           </div>
 
-          {/* 버튼 */}
-          <div className="flex space-x-3 mt-6">
+          <div>
+            <div className="fontRegular text-[#666] text-[14px] mb-2">
+              프로젝트 간단 설명
+            </div>
+            <textarea
+              value={projectData.purpose}
+              onChange={(e) => handleInputChange('purpose', e.target.value)}
+              placeholder="Project Description"
+              rows={4}
+              disabled={isLoading}
+              className="w-full px-4 py-3 border rounded-xl text-[14px] resize-none"
+              required
+            />
+          </div>
+
+          <div className="flex mt-6 space-x-3">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 px-4 border border-gray-300 rounded-xl fontRegular text-[14px] text-gray-700 hover:bg-gray-50 transition bg-white"
+              disabled={isLoading}
+              className="flex-1 py-3 border rounded-xl text-[14px]"
             >
               취소
             </button>
+
             <button
               type="submit"
-              disabled={!isFormValid}
-              className={`
-                flex-1 py-3 px-4 rounded-xl fontRegular text-[14px] transition
-                ${isFormValid 
-                  ? 'bg-project-create text-black hover:opacity-90 cursor-pointer' 
-                  : 'bg-gray-200 text-black cursor-not-allowed'
-                }
-              `}
+              disabled={!isFormValid || isLoading}
+              className={`flex-1 py-3 rounded-xl text-[14px]
+                ${isFormValid && !isLoading
+                  ? 'bg-project-create hover:opacity-90'
+                  : 'bg-gray-200 cursor-not-allowed'
+                }`}
             >
-              프로젝트 생성
+              {isLoading ? '생성 중...' : '프로젝트 생성'}
             </button>
           </div>
         </form>
