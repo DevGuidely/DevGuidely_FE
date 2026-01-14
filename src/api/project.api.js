@@ -5,41 +5,100 @@
   1. ProjectCreateModal.jsx
   2. project.controller → project.service
 */
+import axios from 'axios';
 
 const BASE_URL = "http://localhost:4000";
 
+const projectApi = axios.create({
+  baseURL: BASE_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  timeout: 10000,
+});
+
+projectApi.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+projectApi.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    const message = error.response?.data?.message || error.message;
+    console.error('❌ Project API 에러:', {
+      status: error.response?.status,
+      message: message,
+      data: error.response?.data
+    });
+    
+    if (error.response?.status === 401) {
+      localStorage.removeItem('accessToken');
+    }
+    
+    throw new Error(message);
+  }
+);
+
 export async function createProjectApi({ title, purpose }) {
-  const token = localStorage.getItem("accessToken");
-
-  const res = await fetch(`${BASE_URL}/projects/create`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ title, purpose }),
-  });
-
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || "프로젝트 생성 실패");
-
-  return data;
+  try {
+    const response = await projectApi.post('/projects/create', {
+      title,
+      purpose
+    });
+    
+    return response.data;
+    
+  } catch (error) {
+    console.error('❌ 프로젝트 생성 실패:', error.message);
+    throw new Error(error.message || "프로젝트 생성 실패");
+  }
 }
 
 export async function getProjectsApi() {
-  const token = localStorage.getItem("accessToken");
-
-  const res = await fetch(`${BASE_URL}/projects/list`, {
-    headers: {
-    Authorization: `Bearer ${token}`
-    }
-  });
-
-  const data = await res.json().catch(() => ({}));
-
-  if (!res.ok) {
-    console.error("[getProjectsApi] error response:", data);
-    throw new Error(data.message || "프로젝트 목록 조회 실패");
+  try {
+    const response = await projectApi.get('/projects/list');
+    
+    return response.data;
+    
+  } catch (error) {
+    console.error('❌ 프로젝트 목록 조회 실패:', error.message);
+    throw new Error(error.message || "프로젝트 목록 조회 실패");
   }
-  return data;
+}
+
+export async function deleteProjectApi(projectId) {
+  try {
+    const response = await projectApi.delete(`/projects/${projectId}`);
+    return response.data;
+    
+  } catch (error) {
+    console.error('❌ 프로젝트 삭제 실패:', error.message);
+    throw new Error(error.message || "프로젝트 삭제 실패");
+  }
+}
+
+export async function updateProjectApi({ projectId, title, purpose }) {
+  try {
+    const response = await projectApi.patch(`/projects/${projectId}`, {
+      title,
+      purpose
+    });
+
+    return response.data;
+    
+  } catch (error) {
+    console.error('❌ 프로젝트 수정 실패:', error.message);
+    throw new Error(error.message || "프로젝트 수정 실패");
+  }
 }
