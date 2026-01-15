@@ -93,9 +93,9 @@ export default function ProjectList() {
         prev.filter(project => project.id !== projectId)
       )
 
-      console.log('✅ 프로젝트 삭제 완료:', projectTitle)
+      console.log(' 프로젝트 삭제 완료:', projectTitle)
     } catch (error) {
-      console.error('❌ 프로젝트 삭제 실패:', error)
+      console.error(' 프로젝트 삭제 실패:', error)
       alert('프로젝트 삭제에 실패했습니다.')
     } finally {
       setIsDeleting(null)

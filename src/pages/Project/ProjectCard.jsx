@@ -24,7 +24,7 @@ export default function ProjectCard({ project, onProjectClick, onDelete, isDelet
     if (onProjectClick) {
       onProjectClick(project.id)
     } else {
-      console.log('❌ onProjectClick이 없음!')
+      console.log(' onProjectClick이 없음!')
     }
   }
 
