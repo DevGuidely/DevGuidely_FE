@@ -3,6 +3,8 @@ import Main from './pages/Main.jsx';
 import Login from './pages/Login.jsx';
 import SignUp from './pages/SignUp.jsx';
 import ProjectList from './pages/Project/ProjectList.jsx';
+import ProjectListDetail from './pages/Project/ProjectListDetail.jsx';
+import PlanningDetail from './pages/Project/PlanningDetail.jsx';
 
 export default function App() {
   return (
@@ -11,6 +13,8 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/projectList" element={<ProjectList />} />
+      <Route path="/projectList/:projectId" element={<ProjectListDetail />} />
+      <Route path="/projectList/:projectId/planning" element={<PlanningDetail />} />
     </Routes>
   )
 }

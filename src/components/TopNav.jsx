@@ -6,11 +6,11 @@ export default function TopNav() {
   const isLogin = pathname === '/login'
   const isSignup = pathname === '/signup'
 
-  const baseClass = 'text-[#1e1e1e] fontRegular text-[14px] px-[0.5%] py-[0.3%] tracking-wide no-underline hover:no-underline'
+  const baseClass = 'text-[#1e1e1e] fontRegular text-[14px] px-1 py-2 tracking-wide no-underline hover:no-underline'
   const activeClass = 'font-bold text-black'
 
   return (
-    <div className="flex justify-end items-center">
+    <div className="flex items-center justify-end mx-4 mt-1">
       <Link
         to="/login"
         className={`${baseClass} ${isLogin ? activeClass : ''}`}

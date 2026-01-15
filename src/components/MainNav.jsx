@@ -17,14 +17,17 @@ export default function TopNav() {
   }
 
   return (
-    <div className="flex justify-between items-center mx-[1%] mt-[1%]">
-      <div className="fontMedium w-fit text-[26px] mr-[2%]">
+    <div className="flex items-center justify-between px-5 py-2">
+      <div
+        className="fontMedium w-fit text-[26px] mr-[2%] cursor-pointer"
+        onClick={() => navigate("/")}
+      >
         DevGuidely
       </div>
 
-      <div className="flex justify-end items-center">
+      <div className="flex items-center justify-end mx-4 mt-1">
         {isLoggedIn && (
-          <div className="flex justify-end w-full items-center px-[0.5%] py-[0.3%]">
+          <div className="flex items-center justify-end w-full px-1 py-2">
             <span className="fontRegular w-full text-[14px] mr-[7%] whitespace-nowrap">
               {name}님
             </span>

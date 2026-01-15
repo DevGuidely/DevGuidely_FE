@@ -22,7 +22,6 @@ export default function SignUp() {
   const isAuthCodeEnabled = authCode.trim() !== "";
 
   async function handleButtonClick() {
-    // 인증번호 요청
     if (!isCodeSent) {
       if (!isEmailEnabled) return;
   
@@ -36,7 +35,6 @@ export default function SignUp() {
       return;
     }
   
-    // 인증번호 검증
     if (isAuthCodeEnabled) {
       try {
         const res = await verifyEmailCodeApi({ email, code: authCode });
@@ -70,7 +68,7 @@ export default function SignUp() {
   return (
     <div className='bg-gradient-soft'>
       <div className='bg-gradient-content'>
-        <div className='flex w-full flex-col items-center w-[50%]'>
+        <div className='flex flex-col items-center w-full'>
           <div className='fontSB mt-[3.5%] text-[30px]'>Create an account</div>
           <div className='flex justify-center items-center w-full mt-[0.7%]'>
             <div className='fontLight text-[16px]'>이미 가입한 계정이 있으신가요?</div>
@@ -91,7 +89,7 @@ export default function SignUp() {
           </div>
 
           <div className='flex flex-col w-[50%]'>
-            <div className='flex w-full justify-between items-center'>
+            <div className='flex items-center justify-between w-full'>
               <div className='fontRegular text-[#666] text-[14px]'>이메일</div>
               {email.length > 0 && !isEmailValid && (
                 <div className="mt-[0.6%] text-[12px] text-[#E86666] fontRegular">
@@ -170,7 +168,7 @@ export default function SignUp() {
               </div>
 
               <div className="flex flex-col w-[50%] mt-[2%]">
-                <div className='flex w-full justify-between items-center'>
+                <div className='flex items-center justify-between w-full'>
                   <div className="fontRegular text-[#666] text-[14px]">비밀번호 확인</div>
                   {passwordConfirm.length > 0 && password !== passwordConfirm && (
                     <div className="text-[12px] text-[#E86666] mt-[0.6%]">
