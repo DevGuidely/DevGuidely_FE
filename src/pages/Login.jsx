@@ -22,7 +22,7 @@ export default function Login() {
 
   async function handleLogin() {
     try {
-      setLoginError(""); // 이전 에러 초기화
+      setLoginError("");
 
       const result = await loginApi({ email, password, rememberMe });
       localStorage.setItem("accessToken", result.accessToken);
@@ -48,7 +48,7 @@ export default function Login() {
 
         <div className='flex flex-col w-full items-center justify-center mt-[8%]'>
           <div className='flex flex-col w-[50%]'>
-            <div className='flex w-full justify-between items-center'>
+            <div className='flex items-center justify-between w-full'>
               <div className='fontRegular text-[#666] text-[14px]'>이메일</div>
               {email.length > 0 && !isEmailValid && (
                 <div className="mt-[0.6%] text-[12px] text-[#E86666] fontRegular">
@@ -77,7 +77,7 @@ export default function Login() {
           </div>
 
           <div className="flex justify-between w-[50%] mt-[0.8%]">
-            <div className="flex w-full items-center">
+            <div className="flex items-center w-full">
               <input 
                 type="checkbox"
                 className="flex"
@@ -87,7 +87,7 @@ export default function Login() {
               <div className="fontRegular w-full text-[14px] ml-[1.2%]">Remember me</div>
             </div>
 
-            <div className="flex fontRegular underline text-[14px] whitespace-nowrap">Forgot Password?</div>
+            <Link to="/findPassword" className="flex fontRegular underline text-[14px] whitespace-nowrap">Forgot Password?</Link>
           </div>
 
           <div className="flex justify-center w-full mt-[2%]">
