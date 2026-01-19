@@ -45,7 +45,15 @@ export default function ProjectListDetail() {
     console.log('🎯 단계 카드 직접 클릭:', { stageId, projectId })
     
     if (stageId === 'planning') {
-      navigate(`/projectList/${projectId}/planning`)
+      navigate(`/projectList/${projectId}/planning`, {
+        state: {
+          projectInfo: {
+            name: project?.title || "PROJECT_name",
+            description: project?.purpose || "프로젝트 간단 설명"
+          },
+          openAll: true
+        }
+      })
     } else {
       alert(`${PROJECT_STAGES.find(s => s.id === stageId)?.title} 단계는 준비 중입니다.`)
     }
@@ -55,12 +63,27 @@ export default function ProjectListDetail() {
     console.log('🎯 단계별 아이템 클릭:', { stageId, item, projectId })
     
     if (stageId === 'planning') {
-      navigate(`/projectList/${projectId}/planning`)
+      const sectionMapping = {
+        '서비스 개요': 'overview',
+        '서비스 배경 및 목적': 'purpose',
+        '타겟층 및 사용자 시나리오': 'target',
+        '핵심 문제 정의': 'problem',
+        'MVP 핵심 기능 정의': 'mvp'
+      }
+      
+      navigate(`/projectList/${projectId}/planning`, {
+        state: {
+          projectInfo: {
+            name: project?.title || "PROJECT_name",
+            description: project?.purpose || "프로젝트 간단 설명"
+          },
+          focusSection: sectionMapping[item]
+        }
+      })
     } else {
       alert(`${PROJECT_STAGES.find(s => s.id === stageId)?.title} 단계는 준비 중입니다.`)
     }
   }
-
   const stageItems = {
     planning: [
       '서비스 개요',
