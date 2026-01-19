@@ -2,79 +2,235 @@ import React, { useState } from 'react'
 import MainNav from '../../components/MainNav'
 import ProgressCategoryDropdown from '../../components/Button/ProgressCategoryDropdown'
 import { IoMdArrowDropdown } from 'react-icons/io'
+import { useLocation } from 'react-router-dom'
 
 export default function PlanningDetail() {
-  const [isOverviewOpen, setIsOverviewOpen] = useState(true)
-  const [isPurposeOpen, setIsPurposeOpen] = useState(true)
+  const location = useLocation()
+  
+  const projectInfo = location.state?.projectInfo || {
+    name: 'Unknown Project',
+    description: 'No description available'
+  }
+
+  const getInitialSectionState = () => {
+    const { openAll, focusSection } = location.state || {}
+    
+    if (openAll) {
+      return {
+        overview: true,
+        purpose: true,
+        target: true,
+        problem: true,
+        mvp: true
+      }
+    } else if (focusSection) {
+      return {
+        overview: focusSection === 'overview',
+        purpose: focusSection === 'purpose',
+        target: focusSection === 'target',
+        problem: focusSection === 'problem',
+        mvp: focusSection === 'mvp'
+      }
+    } else {
+      return {
+        overview: true,
+        purpose: true,
+        target: true,
+        problem: true,
+        mvp: true
+      }
+    }
+  }
+
+  const [openSections, setOpenSections] = useState(getInitialSectionState())
+
+  const [formData, setFormData] = useState({
+    serviceBackground: '',
+    servicePurpose: '',
+    targetAudience: '',
+    userScenario: '',
+    coreProblem: '',
+    mvpFeature: ''
+  })
+
+  const toggleSection = (section) => {
+    setOpenSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }))
+  }
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  const sections = [
+    {
+      id: 'overview',
+      title: '서비스 개요',
+      bgColor: 'bg-[#FFE0CD]',
+      content: (
+        <div className="flex flex-col gap-2">
+          <div className="text-[16px] fontRegular">프로젝트 이름</div>
+          <div className="text-[14px] fontMedium w-full">
+            {projectInfo.name}
+          </div>
+          <div className="text-[16px] fontRegular">프로젝트 설명</div>
+          <div className="text-[14px] fontMedium w-full">
+            {projectInfo.description}
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'purpose',
+      title: '서비스 배경 및 목적',
+      bgColor: 'bg-[#F5FAFF]',
+      content: (
+        <div className="flex flex-col gap-2">
+          <div className="text-[16px] fontRegular">서비스 배경</div>
+          <InputField
+            value={formData.serviceBackground}
+            onChange={(value) => handleInputChange('serviceBackground', value)}
+            placeholder="서비스 배경에 대해 적어주세요"
+          />
+          <div className="text-[16px] fontRegular">서비스 목적</div>
+          <InputField
+            value={formData.servicePurpose}
+            onChange={(value) => handleInputChange('servicePurpose', value)}
+            placeholder="서비스 목적에 대해 적어주세요"
+          />
+        </div>
+      )
+    },
+    {
+      id: 'target',
+      title: '타겟층 및 사용자 시나리오',
+      bgColor: 'bg-[#F5FAFF]',
+      content: (
+        <div className="flex flex-col gap-2">
+          <div className="text-[16px] fontRegular">타겟층</div>
+          <InputField
+            value={formData.targetAudience}
+            onChange={(value) => handleInputChange('targetAudience', value)}
+            placeholder="타겟층은 무엇인가요?"
+          />
+          <div className="text-[16px] fontRegular">사용자 시나리오</div>
+          <InputField
+            value={formData.userScenario}
+            onChange={(value) => handleInputChange('userScenario', value)}
+            placeholder="사용자 시나리오가 있다면 적어주세요"
+          />
+        </div>
+      )
+    },
+    {
+      id: 'problem',
+      title: '핵심 문제 정의',
+      bgColor: 'bg-[#F5FAFF]',
+      content: (
+        <div className="flex flex-col gap-2">
+          <div className="text-[16px] fontRegular">핵심 문제 정의</div>
+          <InputField
+            value={formData.coreProblem}
+            onChange={(value) => handleInputChange('coreProblem', value)}
+            placeholder="핵심 문제에 대해 자유롭게 적어보세요"
+          />
+        </div>
+      )
+    },
+    {
+      id: 'mvp',
+      title: 'MVP 핵심 기능 정의',
+      bgColor: 'bg-[#F5FAFF]',
+      content: (
+        <div className="flex flex-col gap-2">
+          <div className="text-[16px] fontRegular">MVP 핵심기능</div>
+          <InputField
+            value={formData.mvpFeature}
+            onChange={(value) => handleInputChange('mvpFeature', value)}
+            placeholder="서비스에 꼭 있어야 할 핵심 기능을 정의 하세요."
+          />
+        </div>
+      )
+    }
+  ]
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col mb-10">
       <MainNav />
 
-      <div className="flex items-center justify-between px-10 mt-5">
-        <div className="flex items-center">
-          <div className="flex bg-[#FFB080] w-10 h-10 rounded-md"></div>
-          <div className="flex flex-col ml-4">
-            <div className="flex fontBold text-[28px]">Planning</div>
-            <div className="flex fontRegular text-[14px]">Project_name</div>
-          </div>
-        </div>
-        <ProgressCategoryDropdown />
+      <ProjectHeader projectName={projectInfo.name} />
+
+      <div className="flex flex-col p-10 mx-24 mt-10 bg-white shadow-xl rounded-3xl">
+        {sections.map((section, index) => (
+          <CollapsibleSection
+            key={section.id}
+            section={section}
+            isOpen={openSections[section.id]}
+            onToggle={() => toggleSection(section.id)}
+            className={index > 0 ? 'mt-10' : ''}
+          />
+        ))}
       </div>
 
-      <div className="flex flex-col p-8 mx-10 mt-10 bg-white shadow-xl rounded-2xl">
-        {/* 서비스 개요 */}
-        <div className="flex flex-col">
-          <div
-            className="flex items-center cursor-pointer"
-            onClick={() => setIsOverviewOpen(prev => !prev)}
-          >
-            <div className="mr-2 text-[#000] text-[20px] fontMedium">
-              서비스 개요
-            </div>
-            <IoMdArrowDropdown
-              className={`text-[18px] text-[#cacaca] transition-transform ${
-                isOverviewOpen ? 'rotate-180' : ''
-              }`}
-            />
-          </div>
-
-          {isOverviewOpen && (
-            <div className="flex flex-col bg-[#FFE0CD] rounded-2xl mt-2 p-4 mx-3 w-full">
-              <div className="text-[16px] fontRegular">프로젝트 이름</div>
-              <div className="text-[14px] fontMedium w-full">
-                프로젝트 설명
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* 서비스 배경 및 목적 */}
-        <div className="flex flex-col mt-10">
-          <div
-            className="flex items-center cursor-pointer"
-            onClick={() => setIsPurposeOpen(prev => !prev)}
-          >
-            <div className="mr-2 text-[#000] text-[20px] fontMedium">
-              서비스 배경 및 목적
-            </div>
-            <IoMdArrowDropdown
-              className={`text-[18px] text-[#cacaca] transition-transform ${
-                isPurposeOpen ? 'rotate-180' : ''
-              }`}
-            />
-          </div>
-
-          {isPurposeOpen && (
-            <div className="flex flex-col bg-[#F5FAFF] rounded-2xl mt-2 p-4 mx-3 w-full">
-              <div className="text-[16px] fontRegular">프로젝트 이름</div>
-              <div className="text-[14px] text-[#ACACAC] fontMedium w-full underline">
-                프로젝트 설명
-              </div>
-            </div>
-          )}
-        </div>
+      <div className='flex justify-end mx-24 mt-8'>
+        <button className='bg-[#DFE7F4] fontMedium px-4 py-1 rounded-3xl'>
+          저장하기
+        </button>
       </div>
     </div>
   )
 }
+
+const ProjectHeader = ({ projectName }) => (
+  <div className="flex items-center justify-between px-24 mt-5">
+    <div className="flex items-center">
+      <div className="flex bg-[#FFB080] w-10 h-10 rounded-md"></div>
+      <div className="flex flex-col ml-4">
+        <div className="flex fontBold text-[28px]">Planning</div>
+        <div className="flex fontRegular text-[14px]">
+          {projectName}
+        </div>
+      </div>
+    </div>
+    <ProgressCategoryDropdown />
+  </div>
+)
+
+const CollapsibleSection = ({ section, isOpen, onToggle, className = '' }) => (
+  <div className={`flex flex-col ${className}`}>
+    <div
+      className="flex items-center cursor-pointer"
+      onClick={onToggle}
+    >
+      <div className="mr-2 text-[#000] text-[20px] fontMedium">
+        {section.title}
+      </div>
+      <IoMdArrowDropdown
+        className={`text-[18px] text-[#cacaca] transition-transform ${
+          isOpen ? 'rotate-180' : ''
+        }`}
+      />
+    </div>
+
+    {isOpen && (
+      <div className={`flex flex-col ${section.bgColor} rounded-3xl mt-4 p-6 mx-3 w-full`}>
+        {section.content}
+      </div>
+    )}
+  </div>
+)
+
+const InputField = ({ value, onChange, placeholder }) => (
+  <input
+    type="text"
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    placeholder={placeholder}
+    className="text-[14px] text-[#ACACAC] fontMedium w-full underline bg-transparent outline-none placeholder:text-[#ACACAC]"
+  />
+)
