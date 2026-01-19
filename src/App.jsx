@@ -6,6 +6,7 @@ import FindPassword from './pages/FindPassword.jsx';
 import ProjectList from './pages/Project/ProjectList.jsx';
 import ProjectListDetail from './pages/Project/ProjectListDetail.jsx';
 import PlanningDetail from './pages/Project/PlanningDetail.jsx';
+import TechDetail from './pages/Project/TechDetail.jsx';
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
       <Route path="/projectList" element={<ProjectList />} />
       <Route path="/projectList/:projectId" element={<ProjectListDetail />} />
       <Route path="/projectList/:projectId/planning" element={<PlanningDetail />} />
+      <Route path="/projectList/:projectId/tech" element={<TechDetail />} />
     </Routes>
   )
 }
