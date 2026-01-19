@@ -8,10 +8,20 @@ import { getProjectsApi } from '../../api/project.api'
 
 export default function ProjectListDetail() {
   const { projectId } = useParams()
-  const navigate = useNavigate() // 추가
+  const navigate = useNavigate()
   const [project, setProject] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeStage, setActiveStage] = useState('')
+  const [selectedTechCategory, setSelectedTechCategory] = useState('')
+  const [selectedSubCategory, setSelectedSubCategory] = useState('')
+
+  const techStacks = {
+    '프론트': ['React', 'Vue'],
+    '백': {
+      '프레임워크': ['Node.js', 'Spring Boot'],
+      'DB': ['MySQL', 'Maria', 'Mongo']
+    }
+  }
 
   useEffect(() => {
     async function fetchProjectDetail() {
@@ -54,6 +64,16 @@ export default function ProjectListDetail() {
           openAll: true
         }
       })
+    } else if (stageId === 'tech') {
+      navigate(`/projectList/${projectId}/tech`, {
+        state: {
+          projectInfo: {
+            name: project?.title || "PROJECT_name",
+            description: project?.purpose || "프로젝트 간단 설명"
+          },
+          openAll: true
+        }
+      })
     } else {
       alert(`${PROJECT_STAGES.find(s => s.id === stageId)?.title} 단계는 준비 중입니다.`)
     }
@@ -80,10 +100,41 @@ export default function ProjectListDetail() {
           focusSection: sectionMapping[item]
         }
       })
+    } else if (stageId === 'tech') {
+      if (item === '프론트') {
+        setSelectedTechCategory(selectedTechCategory === item ? '' : item)
+        setSelectedSubCategory('')
+      } else if (item === '백') {
+        setSelectedTechCategory(selectedTechCategory === item ? '' : item)
+        setSelectedSubCategory('')
+      }
     } else {
       alert(`${PROJECT_STAGES.find(s => s.id === stageId)?.title} 단계는 준비 중입니다.`)
     }
   }
+
+  const handleSubCategoryClick = (subCategory) => {
+    setSelectedSubCategory(selectedSubCategory === subCategory ? '' : subCategory)
+  }
+
+  const handleTechStackSelect = (techStack) => {
+    const categoryMapping = {
+      '프론트': 'frontend',
+      '백': 'backend'
+    }
+    
+    navigate(`/projectList/${projectId}/tech`, {
+      state: {
+        projectInfo: {
+          name: project?.title || "PROJECT_name",
+          description: project?.purpose || "프로젝트 간단 설명"
+        },
+        selectedCategory: categoryMapping[selectedTechCategory],
+        selectedTechStack: techStack
+      }
+    })
+  }
+
   const stageItems = {
     planning: [
       '서비스 개요',
@@ -93,11 +144,8 @@ export default function ProjectListDetail() {
       'MVP 핵심 기능 정의'
     ],
     tech: [
-      '기술 스택 선정',
-      '아키텍처 설계',
-      '개발 환경 설정',
-      'DB 설계',
-      'API 설계'
+      '프론트',
+      '백',
     ],
     dev: [
       '프론트엔드 개발',
@@ -134,14 +182,33 @@ export default function ProjectListDetail() {
     )
   }
 
+  const renderTechStackButtons = () => {
+    if (selectedTechCategory === '프론트') {
+      return techStacks['프론트'].map((tech) => (
+        <button
+          key={tech}
+          onClick={() => handleTechStackSelect(tech)}
+          className='px-4 py-1 rounded-full fontMedium transition-all duration-200 border border-[#D7DCE5] text-[#5C667B] hover:border-gray-400 hover:bg-[#EFF5FF]'
+        >
+          {tech}
+        </button>
+      ))
+    } else if (selectedTechCategory === '백' && selectedSubCategory) {
+      return techStacks['백'][selectedSubCategory]?.map((tech) => (
+        <button
+          key={tech}
+          onClick={() => handleTechStackSelect(tech)}
+          className='px-4 py-1 rounded-full fontMedium transition-all duration-200 border bg-[#C3C3C3] text-[#fff] hover:border-gray-400'
+        >
+          {tech}
+        </button>
+      ))
+    }
+    return null
+  }
+
   return (
     <div className='min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'>
-      {/* <div className='fixed inset-0 opacity-30'>
-        <div className='absolute bg-blue-300 rounded-full top-20 left-20 w-72 h-72 mix-blend-multiply filter blur-xl animate-blob'></div>
-        <div className='absolute bg-purple-300 rounded-full top-40 right-20 w-72 h-72 mix-blend-multiply filter blur-xl animate-blob animation-delay-2000'></div>
-        <div className='absolute bg-pink-300 rounded-full -bottom-8 left-40 w-72 h-72 mix-blend-multiply filter blur-xl animate-blob animation-delay-4000'></div>
-      </div> */}
-
       <MainNav />
       
       <div className='relative z-10 backdrop-blur-sm'>
@@ -208,21 +275,75 @@ export default function ProjectListDetail() {
               <div className='p-8'>
                 <div className='space-y-4'>
                   {stageItems[activeStage]?.map((item, index) => (
-                    <div 
-                      key={index}
-                      className='p-5 transition-all duration-300 border cursor-pointer group rounded-xl backdrop-blur-md bg-white/15 border-white/20 hover:bg-white/25 hover:border-white/40 hover:shadow-lg hover:transform hover:translate-x-2'
-                      onClick={() => handleStageItemClick(activeStage, item)}
-                    >
-                      <div className='flex items-center justify-between'>
-                        <span className='text-lg text-gray-700 fontMedium group-hover:text-gray-800'>
-                          {item}
-                        </span>
-                        <span className='text-gray-400 transition-all duration-300 opacity-0 group-hover:text-blue-600 group-hover:opacity-100 group-hover:transform group-hover:translate-x-1'>
-                          <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13 7l5 5m0 0l-5 5m5-5H6' />
-                          </svg>
-                        </span>
+                    <div key={index}>
+                      <div 
+                        className={`
+                          p-5 transition-all duration-300 border cursor-pointer group rounded-xl backdrop-blur-md bg-white/15 border-white/20 hover:bg-white/25 hover:border-white/40 hover:shadow-lg hover:transform hover:translate-x-2
+                          ${selectedTechCategory === item ? 'bg-white/25 border-white/40' : ''}
+                        `}
+                        onClick={() => handleStageItemClick(activeStage, item)}
+                      >
+                        <div className='flex items-center justify-between'>
+                          <span className='text-lg text-gray-700 fontMedium group-hover:text-gray-800'>
+                            {item}
+                          </span>
+                          <span className='text-gray-400 transition-all duration-300 opacity-0 group-hover:text-blue-600 group-hover:opacity-100 group-hover:transform group-hover:translate-x-1'>
+                            <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13 7l5 5m0 0l-5 5m5-5H6' />
+                            </svg>
+                          </span>
+                        </div>
                       </div>
+                      
+                      {/* 프론트엔드 기술 스택 */}
+                      {activeStage === 'tech' && selectedTechCategory === '프론트' && item === '프론트' && (
+                        <div className='mt-3 ml-8'>
+                          <div className='flex gap-3'>
+                            {renderTechStackButtons()}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 백엔드 서브 카테고리 */}
+                      {activeStage === 'tech' && selectedTechCategory === '백' && item === '백' && (
+                        <div className='mt-3 ml-8 space-y-3'>
+                          <div className='flex gap-3'>
+                            <button
+                              onClick={() => handleSubCategoryClick('프레임워크')}
+                              className={`
+                                px-4 py-1 rounded-full fontMedium transition-all duration-200
+                                ${selectedSubCategory === '프레임워크'
+                                  ? 'bg-[#deeaff] text-[#333333] border border-[#D7DCE5]'
+                                  : 'border border-[#D7DCE5] text-[#5C667B] hover:border-gray-400 hover:bg-[#EFF5FF]'
+                                }
+                              `}
+                            >
+                              프레임워크
+                            </button>
+                            <button
+                              onClick={() => handleSubCategoryClick('DB')}
+                              className={`
+                                px-4 py-1 rounded-full fontMedium transition-all duration-200
+                                ${selectedSubCategory === 'DB'
+                                  ? 'bg-[#deeaff] text-[#333333] border border-[#D7DCE5]'
+                                  : 'border border-[#D7DCE5] text-[#5C667B] hover:border-gray-400 hover:bg-[#EFF5FF]'
+                                }
+                              `}
+                            >
+                              DB
+                            </button>
+                          </div>
+                          
+                          {/* 선택된 서브 카테고리의 기술 스택 */}
+                          {selectedSubCategory && (
+                            <div>
+                              <div className='flex gap-3'>
+                                {renderTechStackButtons()}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
