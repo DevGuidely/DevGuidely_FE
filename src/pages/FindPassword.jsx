@@ -1,13 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
-import { sendEmailCodeApi, verifyEmailCodeApi } from '../api/api' // API 함수들 import
+import { requestPasswordResetCode, verifyPasswordResetCode, resetPassword } from '../api/resetPassword.api' // API 함수들 import
 
 export default function FindPassword() {
   const navigate = useNavigate()
   
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [verifiedToken, setVerifiedToken] = useState(null)
+  const [resetToken, setResetToken] = useState(null)
   const [isCodeSent, setIsCodeSent] = useState(false)
   const [authCode, setAuthCode] = useState('')
   const [isVerified, setIsVerified] = useState(false)
@@ -33,7 +33,7 @@ export default function FindPassword() {
       if (!isEmailEnabled) return
 
       try {
-        // await sendEmailCodeApi(email) - 이거 바꿔야 함 !!!!! (api 연결)
+        await requestPasswordResetCode({email, name})
         alert("인증번호가 이메일로 전송되었습니다.")
         setIsCodeSent(true)
         setError('')
@@ -46,8 +46,8 @@ export default function FindPassword() {
 
     if (isAuthCodeEnabled) {
       try {
-        const res = await verifyEmailCodeApi({ email, code: authCode })
-        setVerifiedToken(res.verifiedToken)
+        const res = await verifyPasswordResetCode({ email, code: authCode })
+        setResetToken(res.resetToken)
         alert("이메일 인증이 완료되었습니다.")
         setIsVerified(true)
         setError('')
@@ -59,7 +59,19 @@ export default function FindPassword() {
   }
 
   async function handlePasswordChange() {
+    console.log({
+  email,
+  resetToken,
+  password,
+});
+
     try {
+      await resetPassword({
+      email,
+      resetToken: resetToken,
+      newPassword: password,
+    })
+
       alert("비밀번호가 성공적으로 변경되었습니다.")
       navigate("/login")
     } catch (e) {
