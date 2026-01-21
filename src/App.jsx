@@ -17,8 +17,8 @@ export default function App() {
       <Route path="/findPassword" element={<FindPassword />} />
       <Route path="/projectList" element={<ProjectList />} />
       <Route path="/projectList/:projectId" element={<ProjectListDetail />} />
-      <Route path="/projectList/:projectId/planning" element={<PlanningDetail />} />
-      <Route path="/projectList/:projectId/tech" element={<TechDetail />} />
+      <Route path="/projectList/:id/planning" element={<PlanningDetail />} />
+      <Route path="/projectList/:id/tech" element={<TechDetail />} />
     </Routes>
   )
 }

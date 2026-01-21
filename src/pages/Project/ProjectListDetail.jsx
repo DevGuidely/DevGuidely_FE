@@ -52,8 +52,6 @@ export default function ProjectListDetail() {
   }, [projectId])
 
   const handleStageCardClick = (stageId) => {
-    console.log('🎯 단계 카드 직접 클릭:', { stageId, projectId })
-    
     if (stageId === 'planning') {
       navigate(`/projectList/${projectId}/planning`, {
         state: {
