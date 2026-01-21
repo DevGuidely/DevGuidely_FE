@@ -1,11 +1,22 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useParams, useLocation } from 'react-router-dom'
 import MainNav from '../../components/MainNav'
 import ProgressCategoryDropdown from '../../components/Button/ProgressCategoryDropdown'
 import { IoMdArrowDropdown } from 'react-icons/io'
-import { useLocation } from 'react-router-dom'
+import { savePlanning, getPlanning } from '../../api/project.planning.api'
 
 export default function PlanningDetail() {
+  const { id: projectId } = useParams()
   const location = useLocation()
+  
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      console.log('사용자 ID:', payload.userId);
+      console.log('전체 payload:', payload);
+    }
+  }, []);
   
   const projectInfo = location.state?.projectInfo || {
     name: 'Unknown Project',
@@ -43,6 +54,8 @@ export default function PlanningDetail() {
   }
 
   const [openSections, setOpenSections] = useState(getInitialSectionState())
+  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   const [formData, setFormData] = useState({
     serviceBackground: '',
@@ -53,6 +66,91 @@ export default function PlanningDetail() {
     mvpFeature: ''
   })
 
+  useEffect(() => {
+    if (projectId) {
+      loadPlanningData()
+    }
+  }, [projectId])
+
+  const loadPlanningData = async () => {
+    try {
+      setLoading(true)
+      const data = await getPlanning({ projectId })
+      
+      if (data && Array.isArray(data)) {
+        const newFormData = {
+          serviceBackground: '',
+          servicePurpose: '',
+          targetAudience: '',
+          userScenario: '',
+          coreProblem: '',
+          mvpFeature: ''
+        }
+        
+        data.forEach(section => {
+          switch(section.section_key) {
+            case 'background_purpose':
+              const parts = (section.content || '').split('\n')
+              newFormData.serviceBackground = parts[0] || ''
+              newFormData.servicePurpose = parts[1] || parts[0] || ''
+              break
+            case 'target_scenario':
+              const targetParts = (section.content || '').split('\n')
+              newFormData.targetAudience = targetParts[0] || ''
+              newFormData.userScenario = targetParts[1] || targetParts[0] || ''
+              break
+            case 'core_problem':
+              newFormData.coreProblem = section.content || ''
+              break
+            case 'mvp_features':
+              newFormData.mvpFeature = section.content || ''
+              break
+          }
+        })
+        
+        setFormData(newFormData)
+      }
+    } catch (error) {
+      console.error('Failed to load planning data:', error)
+      // 404나 기타 에러가 발생해도 빈 폼으로 시작 (신규 생성)
+      console.log('새로운 planning을 생성합니다.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSave = async () => {
+    console.log('handleSave - projectId:', projectId) // 디버깅용
+    
+    if (!projectId) {
+      alert('프로젝트 ID가 없습니다.')
+      return
+    }
+
+    try {
+      setSaving(true)
+      
+      // 프론트엔드 formData를 백엔드가 요구하는 형태로 변환
+      const payload = {
+        service_overview: `${formData.serviceBackground || ''}\n${formData.servicePurpose || ''}`.trim(),
+        background_purpose: `${formData.serviceBackground || ''}\n${formData.servicePurpose || ''}`.trim(),
+        target_scenario: `${formData.targetAudience || ''}\n${formData.userScenario || ''}`.trim(),
+        core_problem: formData.coreProblem || '',
+        mvp_features: formData.mvpFeature || ''
+      }
+
+      await savePlanning({ projectId, payload })
+      alert('Planning이 성공적으로 저장되었습니다.')
+      
+    } catch (error) {
+      console.error('Save failed:', error)
+      alert('저장에 실패했습니다. 다시 시도해주세요.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // 나머지 코드는 모두 동일...
   const toggleSection = (section) => {
     setOpenSections(prev => ({
       ...prev,
@@ -96,12 +194,14 @@ export default function PlanningDetail() {
             value={formData.serviceBackground}
             onChange={(value) => handleInputChange('serviceBackground', value)}
             placeholder="서비스 배경에 대해 적어주세요"
+            disabled={loading}
           />
           <div className="text-[16px] fontRegular">서비스 목적</div>
           <InputField
             value={formData.servicePurpose}
             onChange={(value) => handleInputChange('servicePurpose', value)}
             placeholder="서비스 목적에 대해 적어주세요"
+            disabled={loading}
           />
         </div>
       )
@@ -117,12 +217,14 @@ export default function PlanningDetail() {
             value={formData.targetAudience}
             onChange={(value) => handleInputChange('targetAudience', value)}
             placeholder="타겟층은 무엇인가요?"
+            disabled={loading}
           />
           <div className="text-[16px] fontRegular">사용자 시나리오</div>
           <InputField
             value={formData.userScenario}
             onChange={(value) => handleInputChange('userScenario', value)}
             placeholder="사용자 시나리오가 있다면 적어주세요"
+            disabled={loading}
           />
         </div>
       )
@@ -138,6 +240,7 @@ export default function PlanningDetail() {
             value={formData.coreProblem}
             onChange={(value) => handleInputChange('coreProblem', value)}
             placeholder="핵심 문제에 대해 자유롭게 적어보세요"
+            disabled={loading}
           />
         </div>
       )
@@ -153,11 +256,23 @@ export default function PlanningDetail() {
             value={formData.mvpFeature}
             onChange={(value) => handleInputChange('mvpFeature', value)}
             placeholder="서비스에 꼭 있어야 할 핵심 기능을 정의 하세요."
+            disabled={loading}
           />
         </div>
       )
     }
   ]
+
+  if (loading) {
+    return (
+      <div className="flex flex-col mb-10">
+        <MainNav />
+        <div className="flex items-center justify-center mt-20">
+          <div className="text-[18px] fontMedium">데이터를 불러오는 중...</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col mb-10">
@@ -178,8 +293,16 @@ export default function PlanningDetail() {
       </div>
 
       <div className='flex justify-end mx-24 mt-8'>
-        <button className='bg-[#DFE7F4] fontMedium px-4 py-1 rounded-3xl'>
-          저장하기
+        <button 
+          className={`fontMedium px-4 py-1 rounded-3xl ${
+            saving 
+              ? 'bg-gray-300 cursor-not-allowed' 
+              : 'bg-[#DFE7F4] hover:bg-[#c5d4e8]'
+          }`}
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving ? '저장 중...' : '저장하기'}
         </button>
       </div>
     </div>
@@ -225,12 +348,17 @@ const CollapsibleSection = ({ section, isOpen, onToggle, className = '' }) => (
   </div>
 )
 
-const InputField = ({ value, onChange, placeholder }) => (
+const InputField = ({ value, onChange, placeholder, disabled }) => (
   <input
     type="text"
     value={value}
     onChange={(e) => onChange(e.target.value)}
     placeholder={placeholder}
-    className="text-[14px] text-[#ACACAC] fontMedium w-full underline bg-transparent outline-none placeholder:text-[#ACACAC]"
+    disabled={disabled}
+    className={`text-[14px] fontMedium w-full underline bg-transparent outline-none placeholder:text-[#ACACAC] ${
+      disabled 
+        ? 'text-gray-400 cursor-not-allowed' 
+        : 'text-[#ACACAC]'
+    }`}
   />
 )
