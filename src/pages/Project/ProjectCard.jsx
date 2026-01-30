@@ -1,5 +1,6 @@
 import React from 'react'
 import { MdDeleteOutline } from 'react-icons/md'
+import { AiOutlineEdit } from "react-icons/ai";
 
 const progressLabelMap = {
   before: '진행 전',
@@ -15,7 +16,7 @@ const progressColorMap = {
   unused: 'bg-progress-unused',
 }
 
-export default function ProjectCard({ project, onProjectClick, onDelete, isDeleting = false }) {
+export default function ProjectCard({ project, onProjectClick, onDelete, onEdit, isDeleting = false }) {
   const handleCardClick = () => {
     if (isDeleting) {
       return
@@ -37,7 +38,23 @@ export default function ProjectCard({ project, onProjectClick, onDelete, isDelet
     >
       <div className="flex flex-col">
         <div className="flex items-center justify-between">
-          <div className="fontSB text-[16px]">{project.title}</div>
+          <div className='flex items-center gap-2'>
+            <div className="fontSB text-[16px]">{project.title}</div>
+            <AiOutlineEdit
+              className={`text-[18px] transition-colors ${
+                isDeleting
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-[#838383] hover:text-[#000] cursor-pointer'
+              }`}
+              onClick={(e) => {
+                e.stopPropagation()
+                if (!isDeleting && onEdit) {
+                  onEdit(project)
+                }
+              }}
+            />
+          </div>
+          
           <MdDeleteOutline 
             className={`text-[20px] transition-colors ${
               isDeleting 

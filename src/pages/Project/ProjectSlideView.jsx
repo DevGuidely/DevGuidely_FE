@@ -15,6 +15,7 @@ export default function ProjectSlideView({
   onSlideChange, 
   onProjectClick,
   onDelete, 
+  onEdit,
   isDeleting, 
   itemsPerSlide = 3,
   emptyMessage = '프로젝트가 없습니다.' 
@@ -40,6 +41,7 @@ export default function ProjectSlideView({
               project={project}
               onProjectClick={onProjectClick}
               onDelete={onDelete}
+              onEdit={onEdit}
               isDeleting={isDeleting === project.id}
             />
           </div>
@@ -69,6 +71,7 @@ export default function ProjectSlideView({
                     project={project}
                     onProjectClick={onProjectClick}
                     onDelete={onDelete}
+                    onEdit={onEdit}
                     isDeleting={isDeleting === project.id}
                   />
                 </div>

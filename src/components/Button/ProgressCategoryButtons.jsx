@@ -12,6 +12,7 @@ const PROGRESS_OPTIONS = [
   { key: 'unused', label: '미사용', bg: 'bg-[#BEBEBE]' },
 ]
 
+
 export default function ProgressCategoryButtons({ value, onChange }) {
   return (
     <div className="flex items-center">
