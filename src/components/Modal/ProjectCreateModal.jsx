@@ -1,16 +1,57 @@
-import React, { useState } from 'react'
-import { createProjectApi } from '../../api/project.api.js'
+import React, { useEffect, useState } from 'react'
+import {
+  createProjectApi,
+  updateProjectApi,
+} from '../../api/project.api.js'
 
-export default function ProjectCreateModal({ isOpen, onClose, onCreate }) {
-  const [projectData, setProjectData] = useState({
+export default function ProjectCreateModal({
+  isOpen,
+  onClose,
+  onCreate,
+  onUpdate,
+  initialData,
+  mode = 'create', // 'create' | 'edit'
+}) {
+  const [isLoading, setIsLoading] = useState(false)
+
+  const [formData, setFormData] = useState({
     title: '',
     purpose: '',
   })
 
-  const [isLoading, setIsLoading] = useState(false)
+  /**
+   * 🔹 create / edit 모드에 따른 초기값 세팅
+   */
+  useEffect(() => {
+    if (mode === 'edit' && initialData) {
+      setFormData({
+        title: initialData.title ?? '',
+        purpose: initialData.purpose ?? '',
+      })
+    } else {
+      setFormData({
+        title: '',
+        purpose: '',
+      })
+    }
+  }, [mode, initialData])
 
   if (!isOpen) return null
 
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+    }))
+  }
+
+  const isFormValid =
+    formData.title.trim() !== '' &&
+    formData.purpose.trim() !== ''
+
+  /**
+   * 🔹 생성 / 수정 submit 분기
+   */
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (isLoading) return
@@ -18,47 +59,51 @@ export default function ProjectCreateModal({ isOpen, onClose, onCreate }) {
     try {
       setIsLoading(true)
 
-      const response = await createProjectApi(projectData)
+      if (mode === 'edit') {
+        /** ✅ 프로젝트 수정 */
+        const response = await updateProjectApi(
+          initialData.id,
+          formData
+        )
 
-      /**
-       * ✔️ 성공 판단 기준
-       * - 여기까지 왔다는 것은 axios 에러 / throw 가 없었다는 뜻
-       * - 즉, 서버는 정상 처리
-       */
-      const createdProject =
-        response?.data?.project ??
-        response?.data ??
-        null
+        const updatedProject =
+          response?.data?.project ??
+          response?.data ??
+          {
+            ...initialData,
+            ...formData,
+          }
 
-      // 👉 생성 객체가 없어도 성공으로 처리
-      if (createdProject) {
-        onCreate(createdProject)
+        onUpdate(updatedProject)
       } else {
-        // 생성 데이터가 없으면 부모에서 재조회하도록 신호만 줌
-        onCreate(null)
+        /** ✅ 프로젝트 생성 */
+        const response = await createProjectApi(formData)
+
+        const createdProject =
+          response?.data?.project ??
+          response?.data ??
+          null
+
+        if (createdProject) {
+          onCreate(createdProject)
+        } else {
+          onCreate(null) // 부모에서 재조회
+        }
       }
 
-      setProjectData({ title: '', purpose: '' })
       onClose()
-
     } catch (err) {
-      console.error('❌ 프로젝트 생성 API 에러:', err)
-      alert('프로젝트 생성에 실패했습니다.')
+      console.error(
+        `❌ 프로젝트 ${mode === 'edit' ? '수정' : '생성'} 실패:`,
+        err
+      )
+      alert(
+        `프로젝트 ${mode === 'edit' ? '수정' : '생성'}에 실패했습니다.`
+      )
     } finally {
       setIsLoading(false)
     }
   }
-
-  const handleInputChange = (field, value) => {
-    setProjectData(prev => ({
-      ...prev,
-      [field]: value,
-    }))
-  }
-
-  const isFormValid =
-    projectData.title.trim() !== '' &&
-    projectData.purpose.trim() !== ''
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -72,7 +117,9 @@ export default function ProjectCreateModal({ isOpen, onClose, onCreate }) {
       <div className="relative bg-white rounded-2xl shadow-xl w-[700px] max-w-[90vw] p-10">
         {/* 헤더 */}
         <div className="flex justify-center pt-6">
-          <div className="fontMedium text-[22px]">프로젝트 생성</div>
+          <div className="fontMedium text-[22px]">
+            {mode === 'edit' ? '프로젝트 수정' : '프로젝트 생성'}
+          </div>
         </div>
 
         {/* 폼 */}
@@ -83,8 +130,10 @@ export default function ProjectCreateModal({ isOpen, onClose, onCreate }) {
             </div>
             <input
               type="text"
-              value={projectData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
+              value={formData.title}
+              onChange={(e) =>
+                handleInputChange('title', e.target.value)
+              }
               placeholder="Project Name"
               disabled={isLoading}
               className="w-full px-4 py-3 border rounded-xl text-[14px]"
@@ -97,8 +146,10 @@ export default function ProjectCreateModal({ isOpen, onClose, onCreate }) {
               프로젝트 간단 설명
             </div>
             <textarea
-              value={projectData.purpose}
-              onChange={(e) => handleInputChange('purpose', e.target.value)}
+              value={formData.purpose}
+              onChange={(e) =>
+                handleInputChange('purpose', e.target.value)
+              }
               placeholder="Project Description"
               rows={4}
               disabled={isLoading}
@@ -121,12 +172,19 @@ export default function ProjectCreateModal({ isOpen, onClose, onCreate }) {
               type="submit"
               disabled={!isFormValid || isLoading}
               className={`flex-1 py-3 rounded-xl text-[14px]
-                ${isFormValid && !isLoading
-                  ? 'bg-project-create hover:opacity-90'
-                  : 'bg-gray-200 cursor-not-allowed'
+                ${
+                  isFormValid && !isLoading
+                    ? 'bg-project-create hover:opacity-90'
+                    : 'bg-gray-200 cursor-not-allowed'
                 }`}
             >
-              {isLoading ? '생성 중...' : '프로젝트 생성'}
+              {isLoading
+                ? mode === 'edit'
+                  ? '수정 중...'
+                  : '생성 중...'
+                : mode === 'edit'
+                ? '프로젝트 수정'
+                : '프로젝트 생성'}
             </button>
           </div>
         </form>
