@@ -2,9 +2,14 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import MainNav from '../../components/MainNav'
 import ProjectHeader from '../../components/ProjectDetail/ProjectHeader'
-import StageCard from '../../components/ProjectDetail/StageCard'
 import { PROJECT_STAGES } from '../../constants/projectStages'
-import { getProjectsApi } from '../../api/project.api'
+import { getProjectsApi, getProjectStepStatusApi } from '../../api/project.api'
+
+const STATUS_COLORS = {
+  before: '#FFE7AF',
+  ing: '#F3AD9B',
+  unused: '#BEBEBE'
+}
 
 export default function ProjectListDetail() {
   const { projectId } = useParams()
@@ -14,6 +19,7 @@ export default function ProjectListDetail() {
   const [activeStage, setActiveStage] = useState('')
   const [selectedTechCategory, setSelectedTechCategory] = useState('')
   const [selectedSubCategory, setSelectedSubCategory] = useState('')
+  const [stageStatuses, setStageStatuses] = useState({})
 
   const techStacks = {
     '프론트': ['React', 'Vue'],
@@ -23,6 +29,7 @@ export default function ProjectListDetail() {
     }
   }
 
+  // 프로젝트 정보와 각 단계 상태 가져오기
   useEffect(() => {
     async function fetchProjectDetail() {
       try {
@@ -35,6 +42,9 @@ export default function ProjectListDetail() {
         
         if (foundProject) {
           setProject(foundProject)
+          
+          // 각 단계의 상태 가져오기
+          await fetchStageStatuses(foundProject.id)
         } else {
           setProject(null)
         }
@@ -50,6 +60,36 @@ export default function ProjectListDetail() {
       fetchProjectDetail()
     }
   }, [projectId])
+
+  // 모든 단계의 상태 조회
+  const fetchStageStatuses = async (projId) => {
+    try {
+      const statuses = {}
+      
+      // PROJECT_STAGES의 각 단계에 대해 상태 조회
+      await Promise.all(
+        PROJECT_STAGES.map(async (stage) => {
+          try {
+            const response = await getProjectStepStatusApi(projId, stage.id)
+            statuses[stage.id] = response.status || 'before' // 기본값: 'before'
+          } catch (error) {
+            console.error(`${stage.id} 상태 조회 실패:`, error)
+            statuses[stage.id] = 'before' // 에러 시 기본값
+          }
+        })
+      )
+      
+      setStageStatuses(statuses)
+    } catch (error) {
+      console.error('단계 상태 조회 실패:', error)
+    }
+  }
+
+  // 단계 상태에 따른 색상 가져오기
+  const getStageStatusColor = (stageId) => {
+    const status = stageStatuses[stageId] || 'before'
+    return STATUS_COLORS[status] || STATUS_COLORS.before
+  }
 
   const handleStageCardClick = (stageId) => {
     if (stageId === 'planning') {
@@ -238,8 +278,15 @@ export default function ProjectListDetail() {
                   <div className='text-lg text-gray-800 fontSB'>{stage.title}</div>
                   <div className='mt-1 text-sm text-gray-600'>{stage.description}</div>
                 </div>
+                
+                {/* ✅ API에서 가져온 색상으로 표시 */}
                 {activeStage === stage.id && (
-                  <div className='text-sm text-blue-600 animate-pulse'>●</div>
+                  <div 
+                    className='text-sm animate-pulse'
+                    style={{ color: getStageStatusColor(stage.id) }}
+                  >
+                    ●
+                  </div>
                 )}
               </div>
             </div>

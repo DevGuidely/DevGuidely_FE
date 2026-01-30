@@ -18,6 +18,7 @@ export default function ProjectList() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [editingProject, setEditingProject] = useState(null)
 
   const fetchProjects = async () => {
     try {
@@ -103,6 +104,14 @@ export default function ProjectList() {
     }
   }
 
+  const handleUpdateProject = (updatedProject) => {
+    console.log('✏️ 수정 데이터:', updatedProject)
+
+    setIsModalOpen(false)
+    setEditingProject(null)
+  }
+
+
   const handleStatusChange = (value) => {
     setSelectedStatus(value)
     setCurrentSlide(0)
@@ -111,6 +120,11 @@ export default function ProjectList() {
   const handleProjectClick = (projectId) => {
     navigate(`/projectList/${projectId}`)
   }
+  
+  const handleEditProject = (project) => {
+  setEditingProject(project)
+  setIsModalOpen(true)
+}
 
   return (
     <div>
@@ -141,6 +155,7 @@ export default function ProjectList() {
               onSlideChange={setCurrentSlide}
               onProjectClick={handleProjectClick}
               onDelete={handleDeleteClick}
+              onEdit={handleEditProject}
               isDeleting={isDeleting}
               itemsPerSlide={3}
               emptyMessage={
@@ -177,9 +192,16 @@ export default function ProjectList() {
 
       <ProjectCreateModal
         isOpen={isModalOpen}
-        onClose={handleModalClose}
+        onClose={() => {
+          setIsModalOpen(false)
+          setEditingProject(null)
+        }}
         onCreate={handleCreateProject}
+        onUpdate={handleUpdateProject}
+        initialData={editingProject}
+        mode={editingProject ? 'edit' : 'create'}
       />
+
 
       <DeleteConfirmModal
         isOpen={!!deleteConfirm}

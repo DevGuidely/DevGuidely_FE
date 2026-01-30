@@ -120,7 +120,7 @@ export default function PlanningDetail() {
   }
 
   const handleSave = async () => {
-    console.log('handleSave - projectId:', projectId) // 디버깅용
+    console.log('handleSave - projectId:', projectId)
     
     if (!projectId) {
       alert('프로젝트 ID가 없습니다.')
@@ -150,7 +150,6 @@ export default function PlanningDetail() {
     }
   }
 
-  // 나머지 코드는 모두 동일...
   const toggleSection = (section) => {
     setOpenSections(prev => ({
       ...prev,
