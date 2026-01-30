@@ -4,6 +4,8 @@ import MainNav from '../../components/MainNav'
 import ProgressCategoryDropdown from '../../components/Button/ProgressCategoryDropdown'
 import { IoMdArrowDropdown } from 'react-icons/io'
 import { savePlanning, getPlanning } from '../../api/project.planning.api'
+import { getProjectStepStatusApi, updateProjectStepStatusApi } from '../../api/status.api';
+
 
 export default function PlanningDetail() {
   const { id: projectId } = useParams()
@@ -76,6 +78,16 @@ export default function PlanningDetail() {
   const loadPlanningData = async () => {
     try {
       setLoading(true)
+      // 진행현황 데이터 불러오기
+      const response = await getProjectStepStatusApi({
+        projectId,
+        stepKey: 'planning',
+      })
+
+      const status = response.step?.status ?? 'before'
+      setCurrentStatus(status)
+
+      // 기존 Planning 데이터 불러오기
       const data = await getPlanning({ projectId })
 
       if (!Array.isArray(data) || data.length === 0) {
@@ -182,6 +194,25 @@ export default function PlanningDetail() {
       [field]: value
     }))
   }
+
+  //상태관리
+  const [currentStatus, setCurrentStatus] = useState("before");
+
+  const handleStatusChange = async (status) => {
+    try {
+      await updateProjectStepStatusApi({
+        projectId,
+        stepKey: 'planning',
+        status,
+      });
+  
+      setCurrentStatus(status);
+    } catch (err) {
+      console.error(err);
+      alert('진행 상태 저장 실패');
+    }
+  };
+
 
   const sections = [
     {
@@ -296,7 +327,11 @@ export default function PlanningDetail() {
     <div className="flex flex-col mb-10">
       <MainNav />
 
-      <ProjectHeader projectName={projectInfo.name} />
+      <ProjectHeader
+        projectName={projectInfo.name}
+        currentStatus={currentStatus}
+        onStatusChange={handleStatusChange}
+      />
 
       <div className="flex flex-col p-10 mx-24 mt-10 bg-white shadow-xl rounded-3xl">
         {sections.map((section, index) => (
@@ -327,7 +362,7 @@ export default function PlanningDetail() {
   )
 }
 
-const ProjectHeader = ({ projectName }) => (
+const ProjectHeader = ({ projectName, currentStatus, onStatusChange }) => (
   <div className="flex items-center justify-between px-24 mt-5">
     <div className="flex items-center">
       <div className="flex bg-[#FFB080] w-10 h-10 rounded-md"></div>
@@ -338,7 +373,10 @@ const ProjectHeader = ({ projectName }) => (
         </div>
       </div>
     </div>
-    <ProgressCategoryDropdown />
+    <ProgressCategoryDropdown
+      value={currentStatus} 
+      onChange={onStatusChange}
+      />
   </div>
 )
 
