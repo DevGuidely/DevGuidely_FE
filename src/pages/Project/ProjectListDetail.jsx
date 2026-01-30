@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import MainNav from '../../components/MainNav'
 import ProjectHeader from '../../components/ProjectDetail/ProjectHeader'
 import { PROJECT_STAGES } from '../../constants/projectStages'
-import { getProjectsApi, getProjectStepStatusApi } from '../../api/project.api'
+import { getProjectsApi } from '../../api/project.api'
+import { getProjectStepStatusApi } from '../../api/status.api'
 
 const STATUS_COLORS = {
   before: '#FFE7AF',
@@ -19,7 +20,7 @@ export default function ProjectListDetail() {
   const [activeStage, setActiveStage] = useState('')
   const [selectedTechCategory, setSelectedTechCategory] = useState('')
   const [selectedSubCategory, setSelectedSubCategory] = useState('')
-  const [stageStatuses, setStageStatuses] = useState({})
+  const [currentStageStatus, setCurrentStageStatus] = useState('before') // ✅ 현재 선택된 단계의 상태
 
   const techStacks = {
     '프론트': ['React', 'Vue'],
@@ -29,7 +30,6 @@ export default function ProjectListDetail() {
     }
   }
 
-  // 프로젝트 정보와 각 단계 상태 가져오기
   useEffect(() => {
     async function fetchProjectDetail() {
       try {
@@ -42,9 +42,6 @@ export default function ProjectListDetail() {
         
         if (foundProject) {
           setProject(foundProject)
-          
-          // 각 단계의 상태 가져오기
-          await fetchStageStatuses(foundProject.id)
         } else {
           setProject(null)
         }
@@ -61,34 +58,26 @@ export default function ProjectListDetail() {
     }
   }, [projectId])
 
-  // 모든 단계의 상태 조회
-  const fetchStageStatuses = async (projId) => {
+  // ✅ 단계를 클릭했을 때 해당 단계의 상태 조회
+  const handleStageClick = async (stageId) => {
+    setActiveStage(stageId)
+    
     try {
-      const statuses = {}
+      // 백엔드에서 해당 단계(stepKey)의 상태 조회
+      const response = await getProjectStepStatusApi(projectId, stageId)
+      const status = response.status || 'before'
       
-      // PROJECT_STAGES의 각 단계에 대해 상태 조회
-      await Promise.all(
-        PROJECT_STAGES.map(async (stage) => {
-          try {
-            const response = await getProjectStepStatusApi(projId, stage.id)
-            statuses[stage.id] = response.status || 'before' // 기본값: 'before'
-          } catch (error) {
-            console.error(`${stage.id} 상태 조회 실패:`, error)
-            statuses[stage.id] = 'before' // 에러 시 기본값
-          }
-        })
-      )
-      
-      setStageStatuses(statuses)
+      setCurrentStageStatus(status)
+      console.log(`✅ ${stageId} 단계 상태 조회 성공:`, status)
     } catch (error) {
-      console.error('단계 상태 조회 실패:', error)
+      console.error(`❌ ${stageId} 단계 상태 조회 실패:`, error)
+      setCurrentStageStatus('before') // 에러 시 기본값
     }
   }
 
-  // 단계 상태에 따른 색상 가져오기
-  const getStageStatusColor = (stageId) => {
-    const status = stageStatuses[stageId] || 'before'
-    return STATUS_COLORS[status] || STATUS_COLORS.before
+  // ✅ 현재 단계 상태에 따른 색상 가져오기
+  const getCurrentStageColor = () => {
+    return STATUS_COLORS[currentStageStatus] || STATUS_COLORS.before
   }
 
   const handleStageCardClick = (stageId) => {
@@ -99,6 +88,7 @@ export default function ProjectListDetail() {
             name: project?.title || "PROJECT_name",
             description: project?.purpose || "프로젝트 간단 설명"
           },
+          stepKey: 'planning',
           openAll: true
         }
       })
@@ -109,6 +99,29 @@ export default function ProjectListDetail() {
             name: project?.title || "PROJECT_name",
             description: project?.purpose || "프로젝트 간단 설명"
           },
+          stepKey: 'tech',
+          openAll: true
+        }
+      })
+    } else if (stageId === 'dev') {
+      navigate(`/projectList/${projectId}/dev`, {
+        state: {
+          projectInfo: {
+            name: project?.title || "PROJECT_name",
+            description: project?.purpose || "프로젝트 간단 설명"
+          },
+          stepKey: 'dev',
+          openAll: true
+        }
+      })
+    } else if (stageId === 'deploy') {
+      navigate(`/projectList/${projectId}/deploy`, {
+        state: {
+          projectInfo: {
+            name: project?.title || "PROJECT_name",
+            description: project?.purpose || "프로젝트 간단 설명"
+          },
+          stepKey: 'deploy',
           openAll: true
         }
       })
@@ -135,6 +148,7 @@ export default function ProjectListDetail() {
             name: project?.title || "PROJECT_name",
             description: project?.purpose || "프로젝트 간단 설명"
           },
+          stepKey: 'planning',
           focusSection: sectionMapping[item]
         }
       })
@@ -167,6 +181,7 @@ export default function ProjectListDetail() {
           name: project?.title || "PROJECT_name",
           description: project?.purpose || "프로젝트 간단 설명"
         },
+        stepKey: 'tech',
         selectedCategory: categoryMapping[selectedTechCategory],
         selectedTechStack: techStack
       }
@@ -264,10 +279,10 @@ export default function ProjectListDetail() {
                 backdrop-blur-lg bg-white/20 border border-white/30 shadow-lg
                 ${activeStage === stage.id
                   ? 'bg-white/40 border-white/50 shadow-xl scale-105'
-                  : 'hover:bg-white/30 hover:border-white/40 hover:shadow-xl'
+                  : 'hover:bg-white/30 hover:border-white/40 hover:hover:shadow-xl'
                 }
               `}
-              onClick={() => setActiveStage(stage.id)}
+              onClick={() => handleStageClick(stage.id)}
             >
               <div className='flex items-center space-x-4'>
                 <div className={`
@@ -279,11 +294,11 @@ export default function ProjectListDetail() {
                   <div className='mt-1 text-sm text-gray-600'>{stage.description}</div>
                 </div>
                 
-                {/* ✅ API에서 가져온 색상으로 표시 */}
+                {/* ✅ 선택된 단계만 백엔드에서 받아온 색상 표시 */}
                 {activeStage === stage.id && (
                   <div 
                     className='text-sm animate-pulse'
-                    style={{ color: getStageStatusColor(stage.id) }}
+                    style={{ color: getCurrentStageColor() }}
                   >
                     ●
                   </div>
