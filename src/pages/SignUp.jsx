@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from "react";
-import { registerApi, sendEmailCodeApi, verifyEmailCodeApi } from "../api/api";
+import { registerApi, sendEmailCodeApi, verifyEmailCodeApi } from "../api/authapi";
 
 export default function SignUp() {
   const navigate = useNavigate();

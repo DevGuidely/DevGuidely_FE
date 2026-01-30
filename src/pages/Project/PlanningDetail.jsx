@@ -23,6 +23,7 @@ export default function PlanningDetail() {
     description: 'No description available'
   }
 
+
   const getInitialSectionState = () => {
     const { openAll, focusSection } = location.state || {}
     
@@ -76,48 +77,53 @@ export default function PlanningDetail() {
     try {
       setLoading(true)
       const data = await getPlanning({ projectId })
-      
-      if (data && Array.isArray(data)) {
-        const newFormData = {
-          serviceBackground: '',
-          servicePurpose: '',
-          targetAudience: '',
-          userScenario: '',
-          coreProblem: '',
-          mvpFeature: ''
-        }
+
+      if (!Array.isArray(data) || data.length === 0) {
+        return
+      }
+
+      const newFormData = {
+        serviceBackground: '',
+        servicePurpose: '',
+        targetAudience: '',
+        userScenario: '',
+        coreProblem: '',
+        mvpFeature: ''
+      }
         
-        data.forEach(section => {
-          switch(section.section_key) {
-            case 'background_purpose':
-              const parts = (section.content || '').split('\n')
-              newFormData.serviceBackground = parts[0] || ''
-              newFormData.servicePurpose = parts[1] || parts[0] || ''
-              break
-            case 'target_scenario':
-              const targetParts = (section.content || '').split('\n')
-              newFormData.targetAudience = targetParts[0] || ''
-              newFormData.userScenario = targetParts[1] || targetParts[0] || ''
-              break
-            case 'core_problem':
-              newFormData.coreProblem = section.content || ''
-              break
-            case 'mvp_features':
-              newFormData.mvpFeature = section.content || ''
-              break
+      data.forEach(section => {
+        if (!section.section_key || !section.content) return
+  
+        switch (section.section_key) {
+          case 'background_purpose':
+            newFormData.serviceBackground = section.content.background || ''
+            newFormData.servicePurpose = section.content.purpose || ''
+            break
+  
+          case 'target_scenario':
+            newFormData.targetAudience = section.content.target || ''
+            newFormData.userScenario = section.content.scenario || ''
+            break
+  
+          case 'core_problem':
+            newFormData.coreProblem = section.content.problem || ''
+            break
+  
+          case 'mvp_features':
+            newFormData.mvpFeature = section.content.mvp || ''
+            break
           }
         })
         
-        setFormData(newFormData)
-      }
-    } catch (error) {
-      console.error('Failed to load planning data:', error)
-      // 404나 기타 에러가 발생해도 빈 폼으로 시작 (신규 생성)
-      console.log('새로운 planning을 생성합니다.')
-    } finally {
-      setLoading(false)
-    }
+    setFormData(newFormData)
+
+  } catch (error) {
+    console.error('Failed to load planning data:', error)
+    console.log('새로운 planning을 생성합니다.')
+  } finally {
+    setLoading(false)
   }
+}
 
   const handleSave = async () => {
     console.log('handleSave - projectId:', projectId)
@@ -132,12 +138,25 @@ export default function PlanningDetail() {
       
       // 프론트엔드 formData를 백엔드가 요구하는 형태로 변환
       const payload = {
-        service_overview: `${formData.serviceBackground || ''}\n${formData.servicePurpose || ''}`.trim(),
-        background_purpose: `${formData.serviceBackground || ''}\n${formData.servicePurpose || ''}`.trim(),
-        target_scenario: `${formData.targetAudience || ''}\n${formData.userScenario || ''}`.trim(),
-        core_problem: formData.coreProblem || '',
-        mvp_features: formData.mvpFeature || ''
-      }
+        service_overview: {
+          name: projectInfo.name || '',  
+          description: projectInfo.description || '',  
+        },
+        background_purpose: {
+          background: formData.serviceBackground || '',
+          purpose: formData.servicePurpose || '',
+        },
+        target_scenario: {
+          target: formData.targetAudience || '',
+          scenario: formData.userScenario || '',
+        },
+        core_problem: {
+          problem: formData.coreProblem || '',
+        },
+        mvp_features: {
+          mvp: formData.mvpFeature || '',
+      },
+    };
 
       await savePlanning({ projectId, payload })
       alert('Planning이 성공적으로 저장되었습니다.')

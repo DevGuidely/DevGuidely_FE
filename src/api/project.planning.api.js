@@ -1,29 +1,12 @@
-import axios from 'axios';
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-const planningApi = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// JWT 자동 첨부
-planningApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+import api from './api.js';
 
 /**
  * Planning 저장
+ * POST /projects/:id/planning
  */
 export async function savePlanning({ projectId, payload }) {
   try {
-    const res = await planningApi.post(
+    const res = await api.post(
       `/projects/${projectId}/planning`,
       payload
     );
@@ -44,10 +27,11 @@ export async function savePlanning({ projectId, payload }) {
 
 /**
  * Planning 조회
+ * GET /projects/:id/planning
  */
 export async function getPlanning({ projectId }) {
   try {
-    const res = await planningApi.get(
+    const res = await api.get(
       `/projects/${projectId}/planning`
     );
     return res.data;
@@ -61,10 +45,11 @@ export async function getPlanning({ projectId }) {
 
 /**
  * 단계 상태 변경
+ * PATCH /projects/:id/steps/:stepKey
  */
 export async function updateStepStatus({ projectId, stepKey, status }) {
   try {
-    const res = await planningApi.patch(
+    const res = await api.patch(
       `/projects/${projectId}/steps/${stepKey}`,
       { status }
     );

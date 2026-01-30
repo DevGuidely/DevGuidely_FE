@@ -1,22 +1,4 @@
-import axios from "axios";
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-const api = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// 요청마다 토큰 자동 포함
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+import api from "./api.js";
 
 /* =========================
    프로젝트 CRUD
@@ -24,20 +6,34 @@ api.interceptors.request.use((config) => {
 
 /**
  * 프로젝트 목록 조회
- * GET /projects
+ * GET /projects/list
  */
 export async function getProjectsApi() {
-  const res = await api.get("/projects/list");
-  return res.data; // { items, total }
+  try {
+    const res = await api.get("/projects/list");
+    return res.data; // { items, total }
+  } catch (error) {
+    console.error('getProjects error:', error);
+    throw new Error(
+      error.response?.data?.message || 'Projects fetch failed'
+    );
+  }
 }
 
 /**
  * 프로젝트 생성
- * POST /projects
+ * POST /projects/create
  */
 export async function createProjectApi(payload) {
-  const res = await api.post("/projects/create", payload);
-  return res.data; // { project }
+  try {
+    const res = await api.post("/projects/create", payload);
+    return res.data; // { project }
+  } catch (error) {
+    console.error('createProject error:', error);
+    throw new Error(
+      error.response?.data?.message || 'Project creation failed'
+    );
+  }
 }
 
 /**
@@ -45,8 +41,15 @@ export async function createProjectApi(payload) {
  * PATCH /projects/:id
  */
 export async function updateProjectApi({ projectId, payload }) {
-  const res = await api.patch(`/projects/${projectId}`, payload);
-  return res.data; // { project }
+  try {
+    const res = await api.patch(`/projects/${projectId}`, payload);
+    return res.data; // { project }
+  } catch (error) {
+    console.error('updateProject error:', error);
+    throw new Error(
+      error.response?.data?.message || 'Project update failed'
+    );
+  }
 }
 
 /**
@@ -54,30 +57,13 @@ export async function updateProjectApi({ projectId, payload }) {
  * DELETE /projects/:id
  */
 export async function deleteProjectApi(projectId) {
-  const res = await api.delete(`/projects/${projectId}`);
-  return res.data; // { message }
-}
-
-// 프로젝트 단계 상태 조회
-export const getProjectStepStatusApi = async (projectId, stepKey) => {
   try {
-    const response = await api.get(`/projects/${projectId}/steps/${stepKey}`)
-    return response.data
+    const res = await api.delete(`/projects/${projectId}`);
+    return res.data; // { message }
   } catch (error) {
-    console.error('단계 상태 조회 실패:', error)
-    throw error
-  }
-}
-
-// 프로젝트 단계 상태 업데이트
-export const updateProjectStepStatusApi = async (projectId, stepKey, status) => {
-  try {
-    const response = await api.patch(`/projects/${projectId}/steps/${stepKey}`, {
-      status
-    })
-    return response.data
-  } catch (error) {
-    console.error('단계 상태 업데이트 실패:', error)
-    throw error
+    console.error('deleteProject error:', error);
+    throw new Error(
+      error.response?.data?.message || 'Project deletion failed'
+    );
   }
 }
