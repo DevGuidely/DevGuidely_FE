@@ -9,7 +9,7 @@ import { getProjectStepStatusApi } from '../../api/status.api'
 const STATUS_COLORS = {
   before: '#FFE7AF',
   ing: '#F3AD9B',
-  unused: '#BEBEBE'
+  done: '#B7E4C7'
 }
 
 export default function ProjectListDetail() {
@@ -20,7 +20,7 @@ export default function ProjectListDetail() {
   const [activeStage, setActiveStage] = useState('')
   const [selectedTechCategory, setSelectedTechCategory] = useState('')
   const [selectedSubCategory, setSelectedSubCategory] = useState('')
-  const [currentStageStatus, setCurrentStageStatus] = useState('before') // ✅ 현재 선택된 단계의 상태
+  const [currentStageStatus, setCurrentStageStatus] = useState('')
 
   const techStacks = {
     '프론트': ['React', 'Vue'],
@@ -64,8 +64,11 @@ export default function ProjectListDetail() {
     
     try {
       // 백엔드에서 해당 단계(stepKey)의 상태 조회
-      const response = await getProjectStepStatusApi(projectId, stageId)
-      const status = response.status || 'before'
+      const response = await getProjectStepStatusApi({
+        projectId, 
+        stepKey: stageId,
+      })
+      const status = response.step?.status?? 'before'
       
       setCurrentStageStatus(status)
       console.log(`✅ ${stageId} 단계 상태 조회 성공:`, status)

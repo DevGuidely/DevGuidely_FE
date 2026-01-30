@@ -33,6 +33,8 @@ export default function ProgressCategoryDropdown({ value, onChange }) {
   }, [])
 
   const handleSelect = key => {
+      console.log('handleSelect fired:', key); // ← 이거
+
     setSelectedKey(key)
     onChange?.(key)
     setIsOpen(false)
