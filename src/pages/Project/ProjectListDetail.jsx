@@ -81,7 +81,7 @@ export default function ProjectListDetail() {
     }
   }, [projectId])
 
-  // ✅ 단계를 클릭했을 때 해당 단계의 상태 조회
+  // ✅ 단계를 클릭했을 때 해당 단계의 상태 조회 (tech에서 즉 기술 선택 했을 때 단계를 선택하는 이유 ?)
   const handleStageClick = async (stageId) => {
     setActiveStage(stageId)
     
