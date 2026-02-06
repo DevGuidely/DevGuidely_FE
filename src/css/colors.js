@@ -7,7 +7,7 @@ export const colors = {
       dot3: "#BEBEBE",
     },
     before: "#FFE7AF",
-    ing: "#F3AD9B",
+    doing: "#F3AD9B",
     done: "#B1ED93",
     unused: "#BEBEBE",
   },

@@ -4,14 +4,14 @@ import { AiOutlineEdit } from "react-icons/ai";
 
 const progressLabelMap = {
   before: '진행 전',
-  ing: '진행 중',
+  doing: '진행 중',
   done: '진행 완료',
   unused: '미사용',
 }
 
 const progressColorMap = {
   before: 'bg-progress-before',
-  ing: 'bg-progress-ing',
+  doing: 'bg-progress-ing',
   done: 'bg-progress-done',
   unused: 'bg-progress-unused',
 }

@@ -4,13 +4,18 @@ import MainNav from '../../components/MainNav'
 import ProgressCategoryDropdown from '../../components/Button/ProgressCategoryDropdown'
 import { IoMdArrowDropdown } from 'react-icons/io'
 import { savePlanning, getPlanning } from '../../api/project.step/project.planning.api'
-import { getProjectStepStatusApi, updateProjectStepStatusApi } from '../../api/status.api';
-
+// import { getProjectStepStatusApi, updateProjectStepStatusApi } from '../../api/status.api';
+import useProjectStepStatus from '../../hooks/useProjectStepStatus';
 
 export default function PlanningDetail() {
   const { id: projectId } = useParams()
   const location = useLocation()
-  
+
+  const { status, updateStatus } = useProjectStepStatus({
+    projectId,
+    stepKey: 'planning',
+  })
+    
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (token) {
@@ -78,14 +83,6 @@ export default function PlanningDetail() {
   const loadPlanningData = async () => {
     try {
       setLoading(true)
-      // 진행현황 데이터 불러오기
-      const response = await getProjectStepStatusApi({
-        projectId,
-        stepKey: 'planning',
-      })
-
-      const status = response.step?.status ?? 'before'
-      setCurrentStatus(status)
 
       // 기존 Planning 데이터 불러오기
       const data = await getPlanning({ projectId })
@@ -194,25 +191,6 @@ export default function PlanningDetail() {
       [field]: value
     }))
   }
-
-  //상태관리
-  const [currentStatus, setCurrentStatus] = useState("before");
-
-  const handleStatusChange = async (status) => {
-    try {
-      await updateProjectStepStatusApi({
-        projectId,
-        stepKey: 'planning',
-        status,
-      });
-  
-      setCurrentStatus(status);
-    } catch (err) {
-      console.error(err);
-      alert('진행 상태 저장 실패');
-    }
-  };
-
 
   const sections = [
     {
@@ -324,16 +302,16 @@ export default function PlanningDetail() {
   }
 
   return (
-    <div className="flex flex-col mb-10">
+    <div className="flex flex-col items-center mb-10">
       <MainNav />
 
       <ProjectHeader
         projectName={projectInfo.name}
-        currentStatus={currentStatus}
-        onStatusChange={handleStatusChange}
+        status={status}
+        onStatusChange={updateStatus}
       />
 
-      <div className="flex flex-col p-10 mx-24 mt-10 bg-white shadow-xl rounded-3xl">
+      <div className="flex flex-col w-9/12 p-10 mt-10 bg-white shadow-xl rounded-3xl">
         {sections.map((section, index) => (
           <CollapsibleSection
             key={section.id}
@@ -345,7 +323,7 @@ export default function PlanningDetail() {
         ))}
       </div>
 
-      <div className='flex justify-end mx-24 mt-8'>
+      <div className='flex justify-end w-11/12 mt-8'>
         <button 
           className={`fontMedium px-4 py-1 rounded-3xl ${
             saving 
@@ -362,8 +340,8 @@ export default function PlanningDetail() {
   )
 }
 
-const ProjectHeader = ({ projectName, currentStatus, onStatusChange }) => (
-  <div className="flex items-center justify-between px-24 mt-5">
+const ProjectHeader = ({ projectName, status, updateStatus }) => (
+  <div className="flex items-center justify-between w-full px-24 mt-5">
     <div className="flex items-center">
       <div className="flex bg-[#FFB080] w-10 h-10 rounded-md"></div>
       <div className="flex flex-col ml-4">
@@ -374,8 +352,8 @@ const ProjectHeader = ({ projectName, currentStatus, onStatusChange }) => (
       </div>
     </div>
     <ProgressCategoryDropdown
-      value={currentStatus} 
-      onChange={onStatusChange}
+      value={status} 
+      onChange={updateStatus}
       />
   </div>
 )

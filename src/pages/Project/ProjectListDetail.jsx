@@ -9,7 +9,7 @@ import { saveTech, getTech } from '../../api/project.step/project.tech.api'
 
 const STATUS_COLORS = {
   before: '#FFE7AF',
-  ing: '#F3AD9B',
+  doing: '#F3AD9B',
   done: '#B7E4C7'
 }
 

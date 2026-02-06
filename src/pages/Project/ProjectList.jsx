@@ -105,12 +105,19 @@ export default function ProjectList() {
   }
 
   const handleUpdateProject = (updatedProject) => {
-    console.log('✏️ 수정 데이터:', updatedProject)
+    if (!updatedProject || !updatedProject.id) return
+
+    setProjects(prev =>
+      prev.map(project =>
+        project.id === updatedProject.id
+          ? { ...project, ...updatedProject }
+          : project
+      )
+    )
 
     setIsModalOpen(false)
     setEditingProject(null)
   }
-
 
   const handleStatusChange = (value) => {
     setSelectedStatus(value)
