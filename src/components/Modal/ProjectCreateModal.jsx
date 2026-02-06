@@ -61,10 +61,10 @@ export default function ProjectCreateModal({
 
       if (mode === 'edit') {
         /** ✅ 프로젝트 수정 */
-        const response = await updateProjectApi(
-          initialData.id,
-          formData
-        )
+        const response = await updateProjectApi({
+          projectId: initialData.id,
+          payload: formData
+        })
 
         const updatedProject =
           response?.data?.project ??
