@@ -1,4 +1,4 @@
-import api from './api.js';
+import api from '../api.js';
 
 /**
  * Planning 저장
@@ -7,7 +7,7 @@ import api from './api.js';
 export async function savePlanning({ projectId, payload }) {
   try {
     const res = await api.post(
-      `/projects/${projectId}/planning`,
+      `/projects/${projectId}/steps/planning`,
       payload
     );
     return res.data;
@@ -32,7 +32,7 @@ export async function savePlanning({ projectId, payload }) {
 export async function getPlanning({ projectId }) {
   try {
     const res = await api.get(
-      `/projects/${projectId}/planning`
+      `/projects/${projectId}/steps/planning`
     );
     return res.data;
   } catch (error) {
@@ -46,7 +46,7 @@ export async function getPlanning({ projectId }) {
 /**
  * 단계 상태 변경
  * PATCH /projects/:id/steps/:stepKey
- */
+
 export async function updateStepStatus({ projectId, stepKey, status }) {
   try {
     const res = await api.patch(
@@ -61,3 +61,4 @@ export async function updateStepStatus({ projectId, stepKey, status }) {
     );
   }
 }
+   */

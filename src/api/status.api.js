@@ -6,7 +6,7 @@ export const getProjectStepStatusApi = async ({
   stepKey
 }) => {
     const response = await api.get(
-      `/projects/${projectId}/steps/${stepKey}`,
+      `/projects/${projectId}/steps/${stepKey}/status`,
     )
   return response.data;
 }
@@ -18,7 +18,7 @@ export const updateProjectStepStatusApi = async ({
   status,
 }) => {
   const response = await api.patch(
-    `/projects/${projectId}/steps/${stepKey}`,
+    `/projects/${projectId}/steps/${stepKey}/status`,
     { status }
   )
   return response.data

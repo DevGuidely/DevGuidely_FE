@@ -3,7 +3,7 @@ import { useParams, useLocation } from 'react-router-dom'
 import MainNav from '../../components/MainNav'
 import ProgressCategoryDropdown from '../../components/Button/ProgressCategoryDropdown'
 import { IoMdArrowDropdown } from 'react-icons/io'
-import { savePlanning, getPlanning } from '../../api/project.planning.api'
+import { savePlanning, getPlanning } from '../../api/project.step/project.planning.api'
 import { getProjectStepStatusApi, updateProjectStepStatusApi } from '../../api/status.api';
 
 

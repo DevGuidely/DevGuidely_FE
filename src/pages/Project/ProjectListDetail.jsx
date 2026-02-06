@@ -5,6 +5,7 @@ import ProjectHeader from '../../components/ProjectDetail/ProjectHeader'
 import { PROJECT_STAGES } from '../../constants/projectStages'
 import { getProjectsApi } from '../../api/project.api'
 import { getProjectStepStatusApi } from '../../api/status.api'
+import { saveTech, getTech } from '../../api/project.step/project.tech.api'
 
 const STATUS_COLORS = {
   before: '#FFE7AF',
@@ -21,6 +22,10 @@ export default function ProjectListDetail() {
   const [selectedTechCategory, setSelectedTechCategory] = useState('')
   const [selectedSubCategory, setSelectedSubCategory] = useState('')
   const [currentStageStatus, setCurrentStageStatus] = useState('')
+  const [techStack, setTechStack] = useState({
+    frontend: {},
+    backend: {},
+  })
 
   const techStacks = {
     '프론트': ['React', 'Vue'],
@@ -55,6 +60,24 @@ export default function ProjectListDetail() {
 
     if (projectId) {
       fetchProjectDetail()
+    }
+  }, [projectId])
+
+
+  useEffect(() => {
+    async function fetchTechStack() {
+      try {
+        const data = await getTech({ projectId })
+        if (data) {
+          setTechStack(data)
+        }
+      } catch (err) {
+        console.error('Tech Stack 불러오기 실패:', err)
+      }
+    }
+
+    if (projectId) {
+      fetchTechStack()
     }
   }, [projectId])
 
@@ -238,30 +261,137 @@ export default function ProjectListDetail() {
     )
   }
 
+  /* Tech 버튼 클릭 시 저장 + 페이지이동 */
+ const handleTechButtonClick = async (tech) => {
+   // 1) 어떤 영역 선택인지에 따라 저장 로직 분기
+   if (selectedTechCategory === '프론트') {
+     await handleFrontendSelect(tech)
+   } else if (selectedTechCategory === '백' && selectedSubCategory === '프레임워크') {
+     await handleBackendFrameworkSelect(tech)
+   } else if (selectedTechCategory === '백' && selectedSubCategory === 'DB') {
+     await handleBackendDBSelect(tech)
+   }
+ 
+   // 2) 기존 기능(tech 페이지 이동) 유지하려면 아래 실행
+   handleTechStackSelect(tech)
+ }
+
+
   const renderTechStackButtons = () => {
+    // 프론트
     if (selectedTechCategory === '프론트') {
-      return techStacks['프론트'].map((tech) => (
-        <button
-          key={tech}
-          onClick={() => handleTechStackSelect(tech)}
-          className='px-4 py-1 rounded-full fontMedium transition-all duration-200 border border-[#D7DCE5] text-[#5C667B] hover:border-gray-400 hover:bg-[#EFF5FF]'
-        >
-          {tech}
-        </button>
-      ))
-    } else if (selectedTechCategory === '백' && selectedSubCategory) {
-      return techStacks['백'][selectedSubCategory]?.map((tech) => (
-        <button
-          key={tech}
-          onClick={() => handleTechStackSelect(tech)}
-          className='px-4 py-1 rounded-full fontMedium transition-all duration-200 border bg-[#C3C3C3] text-[#fff] hover:border-gray-400'
-        >
-          {tech}
-        </button>
-      ))
-    }
-    return null
+       return techStacks['프론트'].map((tech) => {
+         const isSelected = techStack.frontend?.framework === tech
+   
+         return (
+           <button
+             key={tech}
+             onClick={() => handleTechButtonClick(tech)}
+             className={`
+               px-4 py-1 rounded-full fontMedium transition-all duration-200 border
+               ${isSelected
+                 ? 'bg-[#deeaff] text-[#333333] border-[#AFC6FF]'
+                 : 'border-[#D7DCE5] text-[#5C667B] hover:border-gray-400 hover:bg-[#EFF5FF]'
+               }
+             `}
+           >
+             {tech}
+           </button>
+         )
+       })
+     }
+   
+     // 백(프레임워크/DB)
+     if (selectedTechCategory === '백' && selectedSubCategory) {
+       return techStacks['백'][selectedSubCategory]?.map((tech) => {
+         const isSelected =
+           selectedSubCategory === '프레임워크'
+             ? techStack.backend?.framework === tech
+             : techStack.backend?.database === tech
+   
+         return (
+           <button
+             key={tech}
+             onClick={() => handleTechButtonClick(tech)}
+             className={`
+               px-4 py-1 rounded-full fontMedium transition-all duration-200 border
+               ${isSelected
+                 ? 'bg-[#C3C3C3] text-[#fff] border-[#C3C3C3]'
+                 : 'border-[#D7DCE5] text-[#5C667B] hover:border-gray-400 hover:bg-[#EFF5FF]'
+               }
+             `}
+           >
+             {tech}
+           </button>
+         )
+       })
+     }
+   
+     return null
   }
+
+  /* Tech DB 저장 관련 */
+  //Frontend Save
+  const handleFrontendSelect = async (framework) => {
+    const nextStack = {
+      ...techStack,
+      frontend: { framework },
+    }
+
+    setTechStack(nextStack)
+
+    try {
+      await saveTech({
+        projectId,
+        payload: nextStack,
+      })
+    } catch (err) {
+      console.error('프론트 기술 저장 실패:', err)
+    }
+  }
+  //Backend : framework Save
+  const handleBackendFrameworkSelect = async (framework) => {
+    const nextStack = {
+      ...techStack,
+      backend: {
+        ...techStack.backend,
+        framework,
+      },
+    }
+
+    setTechStack(nextStack)
+
+    try {
+      await saveTech({
+        projectId,
+        payload: nextStack,
+      })
+    } catch (err) {
+      console.error('벡엔드 프레임워크 저장 실패:', err)
+    }
+  }
+  //Backend : database Save
+  const handleBackendDBSelect = async (database) => {
+    const nextStack = {
+      ...techStack,
+      backend: {
+        ...techStack.backend,
+        database,
+      },
+    }
+
+    setTechStack(nextStack)
+
+    try {
+      await saveTech({
+        projectId,
+        payload: nextStack,
+      })
+    } catch (err) {
+      console.error('DB 프레임워크 저장 실패:', err)
+    }
+  }
+
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'>
