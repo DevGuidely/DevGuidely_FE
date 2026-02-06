@@ -17,7 +17,7 @@ export default function TopNav() {
   }
 
   return (
-    <div className="flex items-center justify-between px-5 py-2">
+    <div className="flex items-center justify-between w-full px-5 py-2">
       <div
         className="fontMedium w-fit text-[26px] mr-[2%] cursor-pointer"
         onClick={() => navigate("/")}

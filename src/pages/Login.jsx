@@ -38,7 +38,7 @@ export default function Login() {
   return (
     <div className='bg-gradient-soft'>
       <div className='bg-gradient-content'>
-        <div className='flex w-full flex-col items-center w-[50%]'>
+        <div className='flex flex-col items-center w-full'>
           <div className='fontSB mt-[5%] text-[30px]'>Login</div>
           <div className='flex justify-center items-center w-full mt-[0.7%]'>
             <div className='fontLight text-[16px]'>가입한 계정이 없으신가요?</div>
