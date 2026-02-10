@@ -6,62 +6,139 @@ import { techGuides } from '../../data/techGuides'
 import { IoMdArrowDropdown } from "react-icons/io";
 import { FaLink } from "react-icons/fa6";
 import { TbCopy } from "react-icons/tb";
+import { getTech, saveTech } from '../../api/project.step/project.tech.api';
 
 export default function TechDetail() {
   const location = useLocation()
+  const initialCategory = location.state?.selectedCategory
 
   const projectInfo = location.state?.projectInfo || {
+    id: null,
     name: 'Unknown Project',
     description: 'No description available',
-  }
+  };
+
+  const projectId = projectInfo.id;
 
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedTechStack, setSelectedTechStack] = useState('')
 
-  useEffect(() => {
-    if (location.state?.selectedCategory) {
-      setSelectedCategory(location.state.selectedCategory)
-    }
-    if (location.state?.selectedTechStack) {
-      setSelectedTechStack(location.state.selectedTechStack)
-    }
-  }, [location.state])
+  const [techStack, setTechStack] = useState({
+    frontend: {},
+    backend: {},
+  })
 
+  useEffect(() => {
+    if (!projectId) return
+
+    const fetchTech = async () => {
+      const data = await getTech({ projectId })
+      if (!data) return
+
+      setTechStack({
+        frontend: data.frontend ?? {},
+        backend: data.backend ?? {},
+      })
+
+      // 🔥 ProjectListDetail에서 넘어온 카테고리 우선
+      if (initialCategory === 'frontend' && data.frontend?.framework) {
+        setSelectedCategory('frontend')
+        setSelectedTechStack(data.frontend.framework)
+      }
+
+      if (initialCategory === 'backend' && data.backend?.framework) {
+        setSelectedCategory('backend')
+        setSelectedTechStack(data.backend.framework)
+      }
+    }
+
+    fetchTech()
+  }, [projectId, initialCategory])
+
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category)
+
+    if (category === 'frontend') {
+      setSelectedTechStack(techStack.frontend?.framework || '')
+      return
+    }
+
+    if (category === 'backend') {
+      setSelectedTechStack(techStack.backend?.framework || '')
+      return
+    }
+    
+    setSelectedTechStack('')
+  }
+
+  const handleTechStackSelect = async (tech) => {
+    setSelectedTechStack(tech)
+    
+    const nextStack =
+      selectedCategory === 'frontend'
+        ? {
+            ...techStack,
+            frontend: { framework: tech },
+          }
+        : {
+            ...techStack,
+            backend: {
+              ...techStack.backend,
+              framework: tech,
+            },
+          };
+
+    setTechStack(nextStack);
+
+    await saveTech({
+      projectId,
+      payload: nextStack,
+    });
+  };
+
+  const handleDBSelect = async (db) => {
+    const nextStack = {
+      ...techStack,
+      backend: {
+        ...techStack.backend,
+        database: db,
+      },
+    };
+
+    setTechStack(nextStack);
+
+    await saveTech({
+      projectId,
+      payload: nextStack,
+    });
+  };
+
+  const current = techStack[selectedCategory]?.framework
+
+  /* ===============================
+   * UI 데이터
+   * =============================== */
   const categories = [
     { id: 'backend', name: '백엔드', bgColor: '#13D199' },
     { id: 'frontend', name: '프론트엔드', bgColor: '#F68F4E' },
     { id: 'design', name: '디자인', bgColor: '#FF7E80' },
-  ]
+  ];
 
   const techStacks = {
     backend: ['Node.js', 'Spring Boot'],
     frontend: ['React', 'Vue'],
     design: [],
-  }
+  };
 
-  const handleCategorySelect = categoryId => {
-    setSelectedCategory(categoryId)
-    setSelectedTechStack('')
-  }
+  const dbStacks = ['MySQL', 'MariaDB', 'Mongo'];
 
-  const handleTechStackSelect = tech => {
-    setSelectedTechStack(tech)
-  }
-
-//   const handleCopy = async (text) => {
-//   try {
-//     await navigator.clipboard.writeText(text)
-//     // 필요하면 toast / alert 추가 가능
-//     console.log('복사 완료')
-//   } catch (err) {
-//     console.error('복사 실패', err)
-//   }
-// }
-
+  /* ===============================
+   * 유틸
+   * =============================== */
   const handleCopy = (text) => {
-    const markdownCode = `\`\`\`\n${text}\n\`\`\``
-    navigator.clipboard.writeText(markdownCode)
-  }
+    const markdownCode = `\`\`\`\n${text}\n\`\`\``;
+    navigator.clipboard.writeText(markdownCode);
+  };
 
   const renderGuide = () => {
     const guide =
@@ -209,28 +286,61 @@ export default function TechDetail() {
 
     return (
       <div className="w-full min-h-[450px]">
-        <div className="flex items-center gap-4 mb-6">
-          <h3 className="text-[18px] fontMedium text-[#333333]">
-            기술 선택
-          </h3>
+        <div className="flex gap-4">
+          <div className="flex gap-5 mb-6">
+            {/* 기술 선택 */}
+            <div className="flex items-center gap-4">
+              <h3 className="text-[18px] fontMedium text-[#333333]">
+                기술 선택
+              </h3>
 
-          <div className="flex gap-3">
-            {techStacks[selectedCategory]?.map(tech => (
-              <button
-                key={tech}
-                onClick={() => handleTechStackSelect(tech)}
-                className={`
-                  px-4 py-0.5 rounded-full fontMedium transition-all
-                  ${
-                    selectedTechStack === tech
-                      ? 'bg-[#EFF5FF] text-[#333333]'
-                      : 'border border-[#D7DCE5] text-[#5C667B]'
-                  }
-                `}
-              >
-                {tech}
-              </button>
-            ))}
+              <div className="flex gap-3">
+                {techStacks[selectedCategory]?.map(tech => (
+                  <button
+                    key={tech}
+                    onClick={() => handleTechStackSelect(tech)}
+                    className={`
+                      px-4 py-0.5 rounded-full fontMedium transition-all
+                      ${
+                        current === tech
+                          ? 'bg-[#EFF5FF] text-[#333333]'
+                          : 'border border-[#D7DCE5] text-[#5C667B]'
+                      }
+                    `}
+                  >
+                    {tech}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* DB 선택 */}
+            {selectedCategory === 'backend' && (
+              <div className="flex items-center gap-4">
+                <h3 className="text-[18px] fontMedium text-[#333333]">
+                  DB
+                </h3>
+
+                <div className="flex gap-3">
+                  {dbStacks.map(db => (
+                    <button
+                      key={db}
+                      onClick={() => handleDBSelect(db)}
+                      className={`
+                        px-4 py-0.5 rounded-full fontMedium transition-all
+                        ${
+                          techStack.backend?.database === db
+                            ? 'bg-[#EFF5FF] text-[#333333]'
+                            : 'border border-[#D7DCE5] text-[#5C667B]'
+                        }
+                      `}
+                    >
+                      {db}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
