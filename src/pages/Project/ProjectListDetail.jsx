@@ -68,9 +68,12 @@ export default function ProjectListDetail() {
     async function fetchTechStack() {
       try {
         const data = await getTech({ projectId })
-        if (data) {
-          setTechStack(data)
-        }
+        if (!data) return
+
+        setTechStack({
+          frontend: data.frontend ?? {},
+          backend: data.backend ?? {},
+        })
       } catch (err) {
         console.error('Tech Stack 불러오기 실패:', err)
       }
@@ -80,6 +83,7 @@ export default function ProjectListDetail() {
       fetchTechStack()
     }
   }, [projectId])
+
 
   // ✅ 단계를 클릭했을 때 해당 단계의 상태 조회 (tech에서 즉 기술 선택 했을 때 단계를 선택하는 이유 ?)
   const handleStageClick = async (stageId) => {
@@ -111,6 +115,7 @@ export default function ProjectListDetail() {
       navigate(`/projectList/${projectId}/planning`, {
         state: {
           projectInfo: {
+            id: projectId,
             name: project?.title || "PROJECT_name",
             description: project?.purpose || "프로젝트 간단 설명"
           },
@@ -122,6 +127,7 @@ export default function ProjectListDetail() {
       navigate(`/projectList/${projectId}/tech`, {
         state: {
           projectInfo: {
+            id: projectId,
             name: project?.title || "PROJECT_name",
             description: project?.purpose || "프로젝트 간단 설명"
           },
@@ -156,9 +162,7 @@ export default function ProjectListDetail() {
     }
   }
 
-  const handleStageItemClick = (stageId, item) => {
-    console.log('🎯 단계별 아이템 클릭:', { stageId, item, projectId })
-    
+  const handleStageItemClick = (stageId, item) => {    
     if (stageId === 'planning') {
       const sectionMapping = {
         '서비스 개요': 'overview',
@@ -180,19 +184,44 @@ export default function ProjectListDetail() {
       })
     } else if (stageId === 'tech') {
       if (item === '프론트') {
-        setSelectedTechCategory(selectedTechCategory === item ? '' : item)
-        setSelectedSubCategory('')
-      } else if (item === '백') {
-        setSelectedTechCategory(selectedTechCategory === item ? '' : item)
+        if (selectedTechCategory === '프론트') {
+          navigate(`/projectList/${projectId}/tech`, {
+            state: {
+              projectInfo: {
+                id: projectId,
+                name: project?.title,
+                description: project?.purpose,
+              },
+              selectedCategory: 'frontend',
+            },
+          })
+          return
+        }
+
+        setSelectedTechCategory('프론트')
         setSelectedSubCategory('')
       }
-    } else {
+
+      if (item === '백') {
+        if (selectedTechCategory === '백') {
+          navigate(`/projectList/${projectId}/tech`, {
+            state: {
+              projectInfo: {
+                id: projectId,
+                name: project?.title,
+                description: project?.purpose,
+              },
+              selectedCategory: 'backend',
+            },
+          })
+          return
+        }
+
+        setSelectedTechCategory('백')
+        setSelectedSubCategory('')
+      }} else {
       alert(`${PROJECT_STAGES.find(s => s.id === stageId)?.title} 단계는 준비 중입니다.`)
     }
-  }
-
-  const handleSubCategoryClick = (subCategory) => {
-    setSelectedSubCategory(selectedSubCategory === subCategory ? '' : subCategory)
   }
 
   const handleTechStackSelect = (techStack) => {
@@ -280,54 +309,54 @@ export default function ProjectListDetail() {
   const renderTechStackButtons = () => {
     // 프론트
     if (selectedTechCategory === '프론트') {
-       return techStacks['프론트'].map((tech) => {
-         const isSelected = techStack.frontend?.framework === tech
-   
-         return (
-           <button
-             key={tech}
-             onClick={() => handleTechButtonClick(tech)}
-             className={`
-               px-4 py-1 rounded-full fontMedium transition-all duration-200 border
-               ${isSelected
-                 ? 'bg-[#deeaff] text-[#333333] border-[#AFC6FF]'
-                 : 'border-[#D7DCE5] text-[#5C667B] hover:border-gray-400 hover:bg-[#EFF5FF]'
-               }
-             `}
-           >
-             {tech}
-           </button>
-         )
-       })
-     }
-   
+      return techStacks['프론트'].map((tech) => {
+        const isSelected = techStack.frontend?.framework === tech
+  
+        return (
+          <button
+            key={tech}
+            onClick={() => handleTechButtonClick(tech)}
+            className={`
+              px-4 py-1 rounded-full fontMedium transition-all duration-200 border
+              ${isSelected
+                ? 'bg-[#deeaff] text-[#333333] border-[#AFC6FF]'
+                : 'border-[#D7DCE5] text-[#5C667B] hover:border-gray-400 hover:bg-[#EFF5FF]'
+              }
+            `}
+          >
+            {tech}
+          </button>
+        )
+      })
+    }
+
      // 백(프레임워크/DB)
-     if (selectedTechCategory === '백' && selectedSubCategory) {
-       return techStacks['백'][selectedSubCategory]?.map((tech) => {
-         const isSelected =
-           selectedSubCategory === '프레임워크'
-             ? techStack.backend?.framework === tech
-             : techStack.backend?.database === tech
-   
-         return (
-           <button
-             key={tech}
-             onClick={() => handleTechButtonClick(tech)}
-             className={`
-               px-4 py-1 rounded-full fontMedium transition-all duration-200 border
-               ${isSelected
-                 ? 'bg-[#C3C3C3] text-[#fff] border-[#C3C3C3]'
-                 : 'border-[#D7DCE5] text-[#5C667B] hover:border-gray-400 hover:bg-[#EFF5FF]'
-               }
-             `}
-           >
-             {tech}
-           </button>
-         )
-       })
-     }
-   
-     return null
+    if (selectedTechCategory === '백' && selectedSubCategory) {
+      return techStacks['백'][selectedSubCategory]?.map((tech) => {
+        const isSelected =
+          selectedSubCategory === '프레임워크'
+            ? techStack.backend?.framework === tech
+            : techStack.backend?.database === tech
+  
+        return (
+          <button
+            key={tech}
+            onClick={() => handleTechButtonClick(tech)}
+            className={`
+              px-4 py-1 rounded-full fontMedium transition-all duration-200 border
+              ${isSelected
+                ? 'bg-[#C3C3C3] text-[#fff] border-[#C3C3C3]'
+                : 'border-[#D7DCE5] text-[#5C667B] hover:border-gray-400 hover:bg-[#EFF5FF]'
+              }
+            `}
+          >
+            {tech}
+          </button>
+        )
+      })
+    }
+  
+    return null
   }
 
   /* Tech DB 저장 관련 */
@@ -488,51 +517,75 @@ export default function ProjectListDetail() {
                         </div>
                       </div>
                       
-                      {/* 프론트엔드 기술 스택 */}
+                      {/* 프론트엔드 기술 스택 (저장된 것만 표시) */}
                       {activeStage === 'tech' && selectedTechCategory === '프론트' && item === '프론트' && (
-                        <div className='mt-3 ml-8'>
-                          <div className='flex gap-3'>
-                            {renderTechStackButtons()}
-                          </div>
+                        <div className="flex items-center gap-5 mt-3 ml-5">
+                          {techStack.frontend?.framework ? (
+                            <div>
+                              <div className="mb-2 text-sm text-gray-500 fontMedium">
+                                프레임워크
+                              </div>
+                              <button
+                                className="
+                                  px-4 py-1 rounded-full fontMedium
+                                  bg-[#deeaff] text-[#333333] border border-[#AFC6FF]
+                                  cursor-default
+                                "
+                              >
+                                {techStack.frontend.framework}
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-400">
+                              아직 선택된 프론트엔드 기술이 없습니다.
+                            </div>
+                          )}
                         </div>
                       )}
 
                       {/* 백엔드 서브 카테고리 */}
                       {activeStage === 'tech' && selectedTechCategory === '백' && item === '백' && (
-                        <div className='mt-3 ml-8 space-y-3'>
-                          <div className='flex gap-3'>
-                            <button
-                              onClick={() => handleSubCategoryClick('프레임워크')}
-                              className={`
-                                px-4 py-1 rounded-full fontMedium transition-all duration-200
-                                ${selectedSubCategory === '프레임워크'
-                                  ? 'bg-[#deeaff] text-[#333333] border border-[#D7DCE5]'
-                                  : 'border border-[#D7DCE5] text-[#5C667B] hover:border-gray-400 hover:bg-[#EFF5FF]'
-                                }
-                              `}
-                            >
-                              프레임워크
-                            </button>
-                            <button
-                              onClick={() => handleSubCategoryClick('DB')}
-                              className={`
-                                px-4 py-1 rounded-full fontMedium transition-all duration-200
-                                ${selectedSubCategory === 'DB'
-                                  ? 'bg-[#deeaff] text-[#333333] border border-[#D7DCE5]'
-                                  : 'border border-[#D7DCE5] text-[#5C667B] hover:border-gray-400 hover:bg-[#EFF5FF]'
-                                }
-                              `}
-                            >
-                              DB
-                            </button>
-                          </div>
-                          
-                          {/* 선택된 서브 카테고리의 기술 스택 */}
-                          {selectedSubCategory && (
+                        <div className="flex items-center gap-5 mt-3 ml-5">
+                          {/* Backend Framework */}
+                          {techStack.backend?.framework && (
                             <div>
-                              <div className='flex gap-3'>
-                                {renderTechStackButtons()}
+                              <div className="mb-2 text-sm text-gray-500 fontMedium">
+                                프레임워크
                               </div>
+                              <button
+                                className="
+                                  px-4 py-1 rounded-full fontMedium
+                                  bg-[#deeaff] text-[#333333] border border-[#AFC6FF]
+                                  cursor-default
+                                "
+                              >
+                                {techStack.backend.framework}
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Backend DB */}
+                          {techStack.backend?.database && (
+                            <div>
+                              <div className="mb-2 text-sm text-gray-500 fontMedium">
+                                DB
+                              </div>
+                              <button
+                                className="
+                                  px-4 py-1 rounded-full fontMedium
+                                  bg-[#deeaff] text-[#333333] border border-[#AFC6FF]
+                                  cursor-default
+                                "
+                              >
+                                {techStack.backend.database}
+                              </button>
+                            </div>
+                          )}
+
+                          {/* 아무 것도 없을 때 */}
+                          {!techStack.backend?.framework && !techStack.backend?.database && (
+                            <div className="text-sm text-gray-400">
+                              아직 선택된 백엔드 기술이 없습니다.
                             </div>
                           )}
                         </div>
