@@ -1,4 +1,3 @@
-// src/constants/projectStages.js
 export const PROJECT_STAGES = [
   {
     id: 'planning',
@@ -17,27 +16,14 @@ export const PROJECT_STAGES = [
     id: 'tech',
     title: 'Tech',
     description: '프로젝트를 세팅하는 단계입니다.',
+    subDescription: '한 번 클릭하면 세부 항목이 펼쳐지고, 다시 한 번 클릭하면 해당 단계의 상세 페이지로 이동합니다.',
     bgColor: 'bg-[#FDD7D8]',
-    items: [
-      '기술 스택 선정',
-      '아키텍처 설계',
-      '개발 환경 설정',
-      'DB 설계',
-      'API 설계'
-    ]
   },
   {
     id: 'dev',
     title: 'Dev',
     description: '프로젝트를 구현하는 단계입니다.',
     bgColor: 'bg-[#B0ADFF]',
-    items: [
-      '프론트엔드 개발',
-      '백엔드 개발',
-      'DB 구축',
-      'API 구현',
-      '테스트 코드 작성'
-    ]
   },
   {
     id: 'deploy',

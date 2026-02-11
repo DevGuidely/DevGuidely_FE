@@ -9,7 +9,6 @@ const PROGRESS_OPTIONS = [
   },
   { key: 'before', label: '진행 전', bg: 'bg-[#FFE7AF]' },
   { key: 'ing', label: '진행 중', bg: 'bg-[#F3AD9B]' },
-  { key: 'unused', label: '미사용', bg: 'bg-[#BEBEBE]' },
 ]
 
 

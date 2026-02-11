@@ -251,13 +251,6 @@ export default function ProjectListDetail() {
       '프론트',
       '백',
     ],
-    dev: [
-      '프론트엔드 개발',
-      '백엔드 개발',
-      'DB 구축',
-      'API 구현',
-      '테스트 코드 작성'
-    ],
     deploy: [
       '서버 환경 구축',
       'CI/CD 파이프라인 설정',
@@ -478,6 +471,9 @@ export default function ProjectListDetail() {
                     </h2>
                     <p className='text-lg text-gray-600'>
                       {PROJECT_STAGES.find(s => s.id === activeStage)?.description}
+                    </p>
+                    <p className='text-lg text-gray-600'>
+                      {PROJECT_STAGES.find(s => s.id === activeStage)?.subDescription}
                     </p>
                   </div>
                   
