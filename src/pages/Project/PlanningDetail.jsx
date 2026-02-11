@@ -4,17 +4,10 @@ import MainNav from '../../components/MainNav'
 import ProgressCategoryDropdown from '../../components/Button/ProgressCategoryDropdown'
 import { IoMdArrowDropdown } from 'react-icons/io'
 import { savePlanning, getPlanning } from '../../api/project.step/project.planning.api'
-// import { getProjectStepStatusApi, updateProjectStepStatusApi } from '../../api/status.api';
-import useProjectStepStatus from '../../hooks/useProjectStepStatus';
 
 export default function PlanningDetail() {
   const { id: projectId } = useParams()
   const location = useLocation()
-
-  const { status, updateStatus } = useProjectStepStatus({
-    projectId,
-    stepKey: 'planning',
-  })
     
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -29,7 +22,6 @@ export default function PlanningDetail() {
     name: 'Unknown Project',
     description: 'No description available'
   }
-
 
   const getInitialSectionState = () => {
     const { openAll, focusSection } = location.state || {}
@@ -305,10 +297,9 @@ export default function PlanningDetail() {
     <div className="flex flex-col items-center mb-10">
       <MainNav />
 
-      <ProjectHeader
-        projectName={projectInfo.name}
-        status={status}
-        onStatusChange={updateStatus}
+      <ProjectHeader 
+        projectName={projectInfo.name} 
+        projectId={projectId}
       />
 
       <div className="flex flex-col w-9/12 p-10 mt-10 bg-white shadow-xl rounded-3xl">
@@ -340,21 +331,22 @@ export default function PlanningDetail() {
   )
 }
 
-const ProjectHeader = ({ projectName, status, updateStatus }) => (
+// 🔥 여기가 중요한 수정 부분!
+const ProjectHeader = ({ projectName, projectId }) => (
   <div className="flex items-center justify-between w-full px-24 mt-5">
     <div className="flex items-center">
-      <div className="flex bg-[#FFB080] w-10 h-10 rounded-md"></div>
+      <div className="flex bg-[#FDD7D8] w-10 h-10 rounded-md" />
       <div className="flex flex-col ml-4">
-        <div className="flex fontBold text-[28px]">Planning</div>
-        <div className="flex fontRegular text-[14px]">
+        <div className="fontBold text-[28px]">Planning</div> {/* Tech → Planning으로 수정 */}
+        <div className="fontRegular text-[14px]">
           {projectName}
         </div>
       </div>
     </div>
-    <ProgressCategoryDropdown
-      value={status} 
-      onChange={updateStatus}
-      />
+    <ProgressCategoryDropdown 
+      projectId={projectId}
+      stepKey="planning" // tech → planning으로 수정
+    />
   </div>
 )
 

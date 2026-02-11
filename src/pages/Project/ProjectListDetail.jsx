@@ -85,12 +85,10 @@ export default function ProjectListDetail() {
   }, [projectId])
 
 
-  // ✅ 단계를 클릭했을 때 해당 단계의 상태 조회 (tech에서 즉 기술 선택 했을 때 단계를 선택하는 이유 ?)
   const handleStageClick = async (stageId) => {
     setActiveStage(stageId)
     
     try {
-      // 백엔드에서 해당 단계(stepKey)의 상태 조회
       const response = await getProjectStepStatusApi({
         projectId, 
         stepKey: stageId,
@@ -98,14 +96,12 @@ export default function ProjectListDetail() {
       const status = response.step?.status?? 'before'
       
       setCurrentStageStatus(status)
-      console.log(`✅ ${stageId} 단계 상태 조회 성공:`, status)
     } catch (error) {
       console.error(`❌ ${stageId} 단계 상태 조회 실패:`, error)
-      setCurrentStageStatus('before') // 에러 시 기본값
+      setCurrentStageStatus('before')
     }
   }
 
-  // ✅ 현재 단계 상태에 따른 색상 가져오기
   const getCurrentStageColor = () => {
     return STATUS_COLORS[currentStageStatus] || STATUS_COLORS.before
   }

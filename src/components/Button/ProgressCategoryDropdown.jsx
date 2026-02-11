@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { RiArrowDropDownLine } from 'react-icons/ri'
+import { getProjectStepStatusApi, updateProjectStepStatusApi } from '../../api/status.api'
 
 const PROGRESS_OPTIONS = [
   { key: 'before', label: '진행 전', bg: 'bg-[#FFE7AF]' },
@@ -7,16 +8,52 @@ const PROGRESS_OPTIONS = [
   { key: 'done', label: '진행 완료', bg: 'bg-[#B7E4C7]' },
 ]
 
-export default function ProgressCategoryDropdown({ value, onChange }) {
+export default function ProgressCategoryDropdown({ 
+  projectId, 
+  stepKey,
+  initialValue 
+}) {
   const [isOpen, setIsOpen] = useState(false)
-  const [selectedKey, setSelectedKey] = useState(value ?? 'before')
+  const [selectedKey, setSelectedKey] = useState(initialValue ?? 'before')
+  const [isLoading, setIsLoading] = useState(false)
   const ref = useRef(null)
 
   useEffect(() => {
-    if (value) {
-      setSelectedKey(value)
+    console.log('🔍 ProgressCategoryDropdown useEffect triggered')
+    console.log('🔍 projectId:', projectId)
+    console.log('🔍 stepKey:', stepKey)
+    
+    if (!projectId || !stepKey) {
+      console.log('❌ Missing projectId or stepKey')
+      return
     }
-  }, [value])
+
+    const fetchStatus = async () => {
+      try {
+        
+        const statusData = await getProjectStepStatusApi({ 
+          projectId, 
+          stepKey 
+        })
+        
+        const status = statusData?.step?.status || statusData?.status;
+        
+        if (status) {
+          setSelectedKey(status)
+        } else {
+          setSelectedKey('before')
+        }
+      } catch (error) {
+        console.error('❌ Error details:', {
+          message: error.message,
+          status: error.response?.status,
+          data: error.response?.data
+        })
+      }
+    }
+
+    fetchStatus()
+  }, [projectId, stepKey])
 
   const selected =
     PROGRESS_OPTIONS.find(option => option.key === selectedKey) ??
@@ -32,13 +69,46 @@ export default function ProgressCategoryDropdown({ value, onChange }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const handleSelect = key => {
-      console.log('handleSelect fired:', key); // ← 이거
+  const handleSelect = async (key) => {
+    if (isLoading || !projectId || !stepKey) {
+      console.log('⚠️ handleSelect blocked:', { isLoading, projectId, stepKey })
+      return
+    }
 
-    setSelectedKey(key)
-    onChange?.(key)
-    setIsOpen(false)
+    try {
+      setIsLoading(true)
+      console.log(`🔄 Updating ${stepKey} status to:`, key)
+      
+      const result = await updateProjectStepStatusApi({
+        projectId,
+        stepKey,
+        status: key
+      })
+      
+      console.log('✅ Update result:', result)
+      
+      setSelectedKey(key)
+      setIsOpen(false)
+      console.log(`✅ ${stepKey} status updated successfully to:`, key)
+    } catch (error) {
+      console.error(`❌ Failed to update ${stepKey} status:`, error)
+      console.error('❌ Update error details:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
+
+  console.log('🔍 Current render state:', { 
+    projectId, 
+    stepKey, 
+    selectedKey, 
+    selectedLabel: selected.label,
+    isLoading 
+  })
 
   return (
     <div ref={ref} className="flex items-center gap-1">
@@ -49,9 +119,10 @@ export default function ProgressCategoryDropdown({ value, onChange }) {
             px-4 py-1 rounded-2xl cursor-pointer
             text-[12px] fontRegular whitespace-nowrap
             ${selected.bg} shadow-md
+            ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
           `}
         >
-          {selected.label}
+          {isLoading ? '저장중...' : selected.label}
         </div>
 
         {/* 드롭다운 (라벨 기준 중앙) */}
@@ -70,6 +141,7 @@ export default function ProgressCategoryDropdown({ value, onChange }) {
                     transition whitespace-nowrap mb-1
                     ${option.bg}
                     ${isSelected ? 'shadow-md' : ''}
+                    ${isLoading ? 'cursor-not-allowed opacity-50' : ''}
                   `}
                 >
                   {option.label}
