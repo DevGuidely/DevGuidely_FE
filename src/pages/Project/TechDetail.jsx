@@ -23,7 +23,6 @@ export default function TechDetail() {
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedTechStack, setSelectedTechStack] = useState('')
   
-  // 각 언어별 토글 상태
   const [jsExpanded, setJsExpanded] = useState(true)
   const [tsExpanded, setTsExpanded] = useState(false)
 
@@ -35,27 +34,46 @@ export default function TechDetail() {
   useEffect(() => {
     if (!projectId) return
 
-    const fetchTech = async () => {
-      const data = await getTech({ projectId })
-      if (!data) return
+    const fetchData = async () => {
+      try {
+        const techData = await getTech({ projectId })
+        if (techData) {
+          setTechStack({
+            frontend: techData.frontend ?? {},
+            backend: techData.backend ?? {},
+          })
 
-      setTechStack({
-        frontend: data.frontend ?? {},
-        backend: data.backend ?? {},
-      })
+          // 저장된 토글 상태 복원
+          if (techData.backend?.toggleStates) {
+            setJsExpanded(techData.backend.toggleStates.jsExpanded ?? true)
+            setTsExpanded(techData.backend.toggleStates.tsExpanded ?? false)
+          }
 
-      if (initialCategory === 'frontend' && data.frontend?.framework) {
-        setSelectedCategory('frontend')
-        setSelectedTechStack(data.frontend.framework)
-      }
+          if (initialCategory === 'frontend' && techData.frontend?.framework) {
+            setSelectedCategory('frontend')
+            setSelectedTechStack(techData.frontend.framework)
+          }
 
-      if (initialCategory === 'backend' && data.backend?.framework) {
-        setSelectedCategory('backend')
-        setSelectedTechStack(data.backend.framework)
+          if (initialCategory === 'backend' && techData.backend?.framework) {
+            setSelectedCategory('backend')
+            setSelectedTechStack(techData.backend.framework)
+          }
+        }
+
+        // ❌ 이 부분 제거 - ProgressCategoryDropdown에서 처리하도록 함
+        // const statusData = await getProjectStepStatusApi({ 
+        //   projectId, 
+        //   stepKey: 'tech' 
+        // })
+        // if (statusData?.status) {
+        //   setStepStatus(statusData.status)
+        // }
+      } catch (error) {
+        console.error('Failed to fetch data:', error)
       }
     }
 
-    fetchTech()
+    fetchData()
   }, [projectId, initialCategory])
 
   const handleCategorySelect = (category) => {
@@ -115,6 +133,57 @@ export default function TechDetail() {
       payload: nextStack,
     });
   };
+
+  // 토글 상태 저장 함수
+  const saveToggleState = async (jsState, tsState) => {
+    const nextStack = {
+      ...techStack,
+      backend: {
+        ...techStack.backend,
+        toggleStates: {
+          jsExpanded: jsState,
+          tsExpanded: tsState,
+        },
+      },
+    };
+
+    setTechStack(nextStack);
+
+    await saveTech({
+      projectId,
+      payload: nextStack,
+    });
+  };
+
+  // JavaScript 토글 핸들러
+  const handleJsToggle = () => {
+    const newJsExpanded = !jsExpanded;
+    setJsExpanded(newJsExpanded);
+    saveToggleState(newJsExpanded, tsExpanded);
+  };
+
+  // TypeScript 토글 핸들러
+  const handleTsToggle = () => {
+    const newTsExpanded = !tsExpanded;
+    setTsExpanded(newTsExpanded);
+    saveToggleState(jsExpanded, newTsExpanded);
+  };
+
+  // ❌ 이 함수도 제거 - ProgressCategoryDropdown에서 직접 처리
+  // const handleStatusUpdate = async (newStatus) => {
+  //   try {
+  //     const result = await updateProjectStepStatusApi({
+  //       projectId,
+  //       stepKey: 'tech',
+  //       status: newStatus
+  //     });
+      
+  //     console.log('🔥 API response:', result);
+  //     setStepStatus(newStatus);
+  //   } catch (error) {
+  //     console.error('❌ Failed to update step status:', error);
+  //   }
+  // };
 
   const current = techStack[selectedCategory]?.framework
 
@@ -524,8 +593,8 @@ export default function TechDetail() {
           ) : selectedTechStack === 'Node.js' ? (
             // Node.js인 경우 JavaScript와 TypeScript 토글로 표시
             <div className="mx-10">
-              {renderLanguageGuide('JavaScript', jsExpanded, () => setJsExpanded(!jsExpanded))}
-              {renderLanguageGuide('TypeScript', tsExpanded, () => setTsExpanded(!tsExpanded))}
+              {renderLanguageGuide('JavaScript', jsExpanded, handleJsToggle)}
+              {renderLanguageGuide('TypeScript', tsExpanded, handleTsToggle)}
             </div>
           ) : (
             // 일반 기술 스택인 경우
@@ -540,8 +609,11 @@ export default function TechDetail() {
     <div className="flex flex-col items-center mb-10">
       <MainNav />
 
-      <ProjectHeader projectName={projectInfo.name} />
-
+      <ProjectHeader 
+        projectName={projectInfo.name} 
+        projectId={projectId}
+      />
+      
       <div className="flex justify-center mt-5">
         <div className="flex gap-4">
           {categories.map(category => (
@@ -575,7 +647,7 @@ export default function TechDetail() {
   )
 }
 
-const ProjectHeader = ({ projectName }) => (
+const ProjectHeader = ({ projectName, projectId }) => (
   <div className="flex items-center justify-between w-full px-24 mt-5">
     <div className="flex items-center">
       <div className="flex bg-[#FDD7D8] w-10 h-10 rounded-md" />
@@ -586,6 +658,9 @@ const ProjectHeader = ({ projectName }) => (
         </div>
       </div>
     </div>
-    <ProgressCategoryDropdown />
+    <ProgressCategoryDropdown 
+      projectId={projectId}
+      stepKey="tech"
+    />
   </div>
 )
