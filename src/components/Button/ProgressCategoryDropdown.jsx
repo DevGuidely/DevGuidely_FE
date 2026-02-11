@@ -19,9 +19,6 @@ export default function ProgressCategoryDropdown({
   const ref = useRef(null)
 
   useEffect(() => {
-    console.log('🔍 ProgressCategoryDropdown useEffect triggered')
-    console.log('🔍 projectId:', projectId)
-    console.log('🔍 stepKey:', stepKey)
     
     if (!projectId || !stepKey) {
       console.log('❌ Missing projectId or stepKey')

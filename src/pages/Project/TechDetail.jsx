@@ -22,6 +22,7 @@ export default function TechDetail() {
 
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedTechStack, setSelectedTechStack] = useState('')
+  const [activeGuide, setActiveGuide] = useState('tech')
   
   const [jsExpanded, setJsExpanded] = useState(true)
   const [tsExpanded, setTsExpanded] = useState(false)
@@ -59,15 +60,6 @@ export default function TechDetail() {
             setSelectedTechStack(techData.backend.framework)
           }
         }
-
-        // ❌ 이 부분 제거 - ProgressCategoryDropdown에서 처리하도록 함
-        // const statusData = await getProjectStepStatusApi({ 
-        //   projectId, 
-        //   stepKey: 'tech' 
-        // })
-        // if (statusData?.status) {
-        //   setStepStatus(statusData.status)
-        // }
       } catch (error) {
         console.error('Failed to fetch data:', error)
       }
@@ -94,6 +86,7 @@ export default function TechDetail() {
 
   const handleTechStackSelect = async (tech) => {
     setSelectedTechStack(tech)
+    setActiveGuide('tech') // 기술 스택 선택시 기술 가이드 활성화
     
     const nextStack =
       selectedCategory === 'frontend'
@@ -127,12 +120,23 @@ export default function TechDetail() {
     };
 
     setTechStack(nextStack);
+    setActiveGuide('db') // DB 선택시 DB 가이드 활성화
 
     await saveTech({
       projectId,
       payload: nextStack,
     });
   };
+
+  // 기술 스택 제목 클릭 핸들러
+  const handleTechGuideClick = () => {
+    setActiveGuide('tech')
+  }
+
+  // DB 제목 클릭 핸들러  
+  const handleDBGuideClick = () => {
+    setActiveGuide('db')
+  }
 
   // 토글 상태 저장 함수
   const saveToggleState = async (jsState, tsState) => {
@@ -169,22 +173,6 @@ export default function TechDetail() {
     saveToggleState(jsExpanded, newTsExpanded);
   };
 
-  // ❌ 이 함수도 제거 - ProgressCategoryDropdown에서 직접 처리
-  // const handleStatusUpdate = async (newStatus) => {
-  //   try {
-  //     const result = await updateProjectStepStatusApi({
-  //       projectId,
-  //       stepKey: 'tech',
-  //       status: newStatus
-  //     });
-      
-  //     console.log('🔥 API response:', result);
-  //     setStepStatus(newStatus);
-  //   } catch (error) {
-  //     console.error('❌ Failed to update step status:', error);
-  //   }
-  // };
-
   const current = techStack[selectedCategory]?.framework
 
   /* ===============================
@@ -210,6 +198,33 @@ export default function TechDetail() {
   const handleCopy = (text) => {
     const markdownCode = `\`\`\`\n${text}\n\`\`\``;
     navigator.clipboard.writeText(markdownCode);
+  };
+
+  // DB 가이드 렌더링 함수 수정
+  const renderDBGuide = () => {
+    const selectedDB = techStack.backend?.database;
+    
+    if (!selectedDB) {
+      return (
+        <div className="flex items-center justify-center min-h-[300px] text-[#666666]">
+          DB를 선택해주세요
+        </div>
+      )
+    }
+
+    // DB 가이드 준비중 메시지
+    return (
+      <div className="flex items-center justify-center min-h-[300px] text-[#666666]">
+        <div className="text-center">
+          <div className="text-[18px] fontMedium mb-2">
+            {selectedDB} 가이드
+          </div>
+          <div className="text-[16px]">
+            가이드를 준비중입니다
+          </div>
+        </div>
+      </div>
+    )
   };
 
   const renderLanguageGuide = (variant, isExpanded, onToggle) => {
@@ -528,11 +543,18 @@ export default function TechDetail() {
 
     return (
       <div className="w-full min-h-[450px]">
-        <div className="flex flex-col gap-4">
+        <div className="flex gap-4">
           {/* 기술 선택 */}
           <div className="flex items-center gap-4">
-            <h3 className="text-[18px] fontMedium text-[#333333]">
-              기술 선택
+            <h3 
+              className={`text-[18px] fontMedium text-[#333333] cursor-pointer px-1 py-0.5 relative ${
+                activeGuide === 'tech' 
+                  ? 'text-[20px] font-bold after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-1 after:bg-[#f7b8ba] after:blur-[3px] after:shadow-md' 
+                  : 'hover:bg-gray-100'
+              }`}
+              onClick={handleTechGuideClick}
+            >
+              기술 스택
             </h3>
 
             <div className="flex gap-3">
@@ -558,7 +580,14 @@ export default function TechDetail() {
           {/* DB 선택 (백엔드일 때만) */}
           {selectedCategory === 'backend' && (
             <div className="flex items-center gap-4">
-              <h3 className="text-[18px] fontMedium text-[#333333]">
+              <h3 
+                className={`text-[18px] fontMedium text-[#333333] cursor-pointer px-1 py-0.5 relative ${
+                  activeGuide === 'db' 
+                    ? 'text-[20px] fontBold after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-1 after:bg-[#f7b8ba] after:blur-[3px] after:shadow-md' 
+                    : 'hover:bg-gray-100'
+                }`}
+                onClick={handleDBGuideClick}
+              >
                 DB
               </h3>
 
@@ -586,19 +615,25 @@ export default function TechDetail() {
 
         {/* 가이드 렌더링 */}
         <div className="mt-6">
-          {!selectedTechStack ? (
-            <div className="flex items-center justify-center min-h-[300px] text-[#666666]">
-              기술 스택을 선택해주세요
-            </div>
-          ) : selectedTechStack === 'Node.js' ? (
-            // Node.js인 경우 JavaScript와 TypeScript 토글로 표시
-            <div className="mx-10">
-              {renderLanguageGuide('JavaScript', jsExpanded, handleJsToggle)}
-              {renderLanguageGuide('TypeScript', tsExpanded, handleTsToggle)}
-            </div>
+          {activeGuide === 'tech' ? (
+            // 기술 스택 가이드
+            !selectedTechStack ? (
+              <div className="flex items-center justify-center min-h-[300px] text-[#666666]">
+                기술 스택을 선택해주세요
+              </div>
+            ) : selectedTechStack === 'Node.js' ? (
+              // Node.js인 경우 JavaScript와 TypeScript 토글로 표시
+              <div className="mx-10">
+                {renderLanguageGuide('JavaScript', jsExpanded, handleJsToggle)}
+                {renderLanguageGuide('TypeScript', tsExpanded, handleTsToggle)}
+              </div>
+            ) : (
+              // 일반 기술 스택인 경우
+              <div className="mx-10">{renderRegularGuide()}</div>
+            )
           ) : (
-            // 일반 기술 스택인 경우
-            <div className="mx-10">{renderRegularGuide()}</div>
+            // DB 가이드
+            <div className="mx-10">{renderDBGuide()}</div>
           )}
         </div>
       </div>
