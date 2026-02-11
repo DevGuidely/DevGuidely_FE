@@ -527,7 +527,7 @@ export default function ProjectListDetail() {
                               </div>
                               <button
                                 className="
-                                  px-4 py-1 rounded-full fontMedium
+                                  px-4 py-0.5 rounded-full fontMedium
                                   bg-[#deeaff] text-[#333333] border border-[#AFC6FF]
                                   cursor-default
                                 "
@@ -554,7 +554,7 @@ export default function ProjectListDetail() {
                               </div>
                               <button
                                 className="
-                                  px-4 py-1 rounded-full fontMedium
+                                  px-4 py-0.5 rounded-full fontMedium
                                   bg-[#deeaff] text-[#333333] border border-[#AFC6FF]
                                   cursor-default
                                 "
@@ -572,7 +572,7 @@ export default function ProjectListDetail() {
                               </div>
                               <button
                                 className="
-                                  px-4 py-1 rounded-full fontMedium
+                                  px-4 py-0.5 rounded-full fontMedium
                                   bg-[#deeaff] text-[#333333] border border-[#AFC6FF]
                                   cursor-default
                                 "
