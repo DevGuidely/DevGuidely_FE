@@ -22,6 +22,10 @@ export default function TechDetail() {
 
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedTechStack, setSelectedTechStack] = useState('')
+  
+  // 각 언어별 토글 상태
+  const [jsExpanded, setJsExpanded] = useState(true)
+  const [tsExpanded, setTsExpanded] = useState(false)
 
   const [techStack, setTechStack] = useState({
     frontend: {},
@@ -40,7 +44,6 @@ export default function TechDetail() {
         backend: data.backend ?? {},
       })
 
-      // 🔥 ProjectListDetail에서 넘어온 카테고리 우선
       if (initialCategory === 'frontend' && data.frontend?.framework) {
         setSelectedCategory('frontend')
         setSelectedTechStack(data.frontend.framework)
@@ -140,9 +143,161 @@ export default function TechDetail() {
     navigator.clipboard.writeText(markdownCode);
   };
 
-  const renderGuide = () => {
-    const guide =
-      techGuides[selectedCategory]?.[selectedTechStack]
+  const renderLanguageGuide = (variant, isExpanded, onToggle) => {
+    const guide = techGuides?.backend?.Node?.variants?.[variant];
+
+    if (!guide) {
+      return null;
+    }
+
+    return (
+      <div className="mb-8">
+        {/* 토글 가능한 섹션 헤더 */}
+        <div 
+          onClick={onToggle}
+          className="flex items-center text-[18px] fontMedium mb-4 mt-8 cursor-pointer hover:text-[#666666] transition-colors"
+        >
+          {variant} 환경 설정
+          <IoMdArrowDropdown 
+            className={`text-[#CACACA] ml-2 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+          />
+        </div>
+
+        {/* 토글되는 컨텐츠 */}
+        {isExpanded && guide.sections?.map((section, sectionIdx) => (
+          <div key={sectionIdx} className="mb-5 ml-4">
+            {section.title && section.title !== `${variant} 환경 설정` && (
+              <div className="flex items-center text-[16px] fontMedium mb-4 mt-6">
+                {section.title}
+              </div>
+            )}
+
+            {/* Step 단위 */}
+            {section.steps?.map((step, stepIdx) => (
+              <div key={stepIdx}>
+                {step.title && (
+                  <div className="flex items-center whitespace-nowrap mb-7 fontMedium">
+                    {stepIdx + 1}. {step.title}
+                    {step.titleNote && (
+                      <p className="flex justify-end w-full text-xs text-[#E86666]">
+                        {step.titleNote}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* 추천 라이브러리 */}
+                {step.RecommendTitle && step.RecommendCode && (
+                  <div className="mb-5">
+                    <div className="flex items-center mb-2 whitespace-nowrap fontMedium">
+                      {step.RecommendTitle}
+                    </div>
+                    <pre className="flex w-full justify-between p-6 mt-2 overflow-x-auto text-sm text-[#676767] bg-[#FFF3F4] rounded-2xl">
+                      {step.RecommendCode.join('\n')}
+                      <TbCopy
+                        className="text-[18px] text-[#CACACA] cursor-pointer hover:text-[#999]"
+                        onClick={() => handleCopy(step.RecommendCode.join('\n'))}
+                      />
+                    </pre>
+                  </div>
+                )}
+
+                {/* subtitle이 있는 경우 */}
+                {step.subtitle && (
+                  <div className="mb-3">
+                    <div className="text-sm fontMedium mb-2 text-[#333333]">
+                      {step.subtitle}
+                    </div>
+                    {step.code && (
+                      <pre className="flex w-full justify-between p-6 overflow-x-auto text-sm text-[#676767] bg-[#F8F9FA] rounded-2xl">
+                        {step.code}
+                        <TbCopy
+                          className="text-[18px] text-[#CACACA] cursor-pointer hover:text-[#999]"
+                          onClick={() => handleCopy(step.code)}
+                        />
+                      </pre>
+                    )}
+                  </div>
+                )}
+
+                {/* 단일 code (subtitle이 없는 경우) */}
+                {step.code && !step.subtitle && (
+                  <pre className="flex w-full justify-between p-6 mb-3 mt-2 overflow-x-auto text-sm text-[#676767] bg-[#F8F9FA] rounded-2xl">
+                    {step.code}
+                    <TbCopy
+                        className="text-[18px] text-[#CACACA] cursor-pointer hover:text-[#999]"
+                        onClick={() => handleCopy(step.code)}
+                      />
+                  </pre>
+                )}
+
+                {/* 여러 code block */}
+                {step.blocks?.map((block, idx) => (
+                  <div key={idx} className="mb-5">
+                    <pre className="flex w-full justify-between p-6 mt-2 overflow-x-auto text-sm text-[#676767] bg-[#F8F9FA] rounded-2xl">
+                      {Array.isArray(block.code) ? block.code.join('\n') : block.code}
+                      <TbCopy
+                        className="text-[18px] text-[#CACACA] cursor-pointer hover:text-[#999]"
+                        onClick={() => handleCopy(Array.isArray(block.code) ? block.code.join('\n') : block.code)}
+                      />
+                    </pre>
+
+                    {block.note && (
+                      <p className="flex justify-end mt-2 text-xs text-[#E86666]">
+                        {block.note}
+                      </p>
+                    )}
+                  </div>
+                ))}
+
+                {step.description && (
+                  <ul className="list-disc ml-5 mt-2 text-sm text-[#666666]">
+                    {step.description.map((desc, i) => (
+                      <li key={i}>{desc}</li>
+                    ))}
+                  </ul>
+                )}
+
+                <div className='flex w-full mb-5'>
+                  {step.link && (
+                    <a
+                      href={step.link.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex justify-start w-full items-center gap-2 text-md text-[#676767] underline"
+                    >
+                      <FaLink />
+                      {step.link.label}
+                    </a>
+                  )}
+
+                  {step.note && (
+                    <p className="flex justify-end w-full text-xs text-[#E86666]">
+                      {step.note}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {/* 폴더 구조 같은 단일 코드 블록 */}
+            {section.code && (
+              <pre className="flex w-full justify-between bg-[#F8F9FA] p-5 rounded-2xl text-sm text-[#676767] overflow-x-auto">
+                {section.code}
+                <TbCopy
+                  className="text-[18px] text-[#CACACA] cursor-pointer hover:text-[#999]"
+                  onClick={() => handleCopy(section.code)}
+                />
+              </pre>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderRegularGuide = () => {
+    const guide = techGuides[selectedCategory]?.[selectedTechStack];
 
     if (!guide) {
       return (
@@ -154,7 +309,7 @@ export default function TechDetail() {
 
     return (
       <div className="w-full">
-        {guide.sections.map((section, sectionIdx) => (
+        {guide.sections?.map((section, sectionIdx) => (
           <div key={sectionIdx} className="mb-5">
             <div className="flex items-center text-[18px] fontMedium mb-4 mt-8">
               {section.title}
@@ -191,8 +346,26 @@ export default function TechDetail() {
                   </div>
                 )}
 
-                {/* 단일 code (node -v 같은 경우) */}
-                {step.code && (
+                {/* subtitle이 있는 경우 */}
+                {step.subtitle && (
+                  <div className="mb-3">
+                    <div className="text-sm fontMedium mb-2 text-[#333333]">
+                      {step.subtitle}
+                    </div>
+                    {step.code && (
+                      <pre className="flex w-full justify-between p-6 overflow-x-auto text-sm text-[#676767] bg-[#F8F9FA] rounded-2xl">
+                        {step.code}
+                        <TbCopy
+                          className="text-[18px] text-[#CACACA] cursor-pointer hover:text-[#999]"
+                          onClick={() => handleCopy(step.code)}
+                        />
+                      </pre>
+                    )}
+                  </div>
+                )}
+
+                {/* 단일 code (subtitle이 없는 경우) */}
+                {step.code && !step.subtitle && (
                   <pre className="flex w-full justify-between p-6 mb-3 mt-2 overflow-x-auto text-sm text-[#676767] bg-[#F8F9FA] rounded-2xl">
                     {step.code}
                     <TbCopy
@@ -206,10 +379,10 @@ export default function TechDetail() {
                 {step.blocks?.map((block, idx) => (
                   <div key={idx} className="mb-5">
                     <pre className="flex w-full justify-between p-6 mt-2 overflow-x-auto text-sm text-[#676767] bg-[#F8F9FA] rounded-2xl">
-                      {block.code.join('\n')}
+                      {Array.isArray(block.code) ? block.code.join('\n') : block.code}
                       <TbCopy
                         className="text-[18px] text-[#CACACA] cursor-pointer hover:text-[#999]"
-                        onClick={() => handleCopy(block.code.join('\n'))}
+                        onClick={() => handleCopy(Array.isArray(block.code) ? block.code.join('\n') : block.code)}
                       />
                     </pre>
 
@@ -286,71 +459,79 @@ export default function TechDetail() {
 
     return (
       <div className="w-full min-h-[450px]">
-        <div className="flex gap-4">
-          <div className="flex gap-5 mb-6">
-            {/* 기술 선택 */}
+        <div className="flex flex-col gap-4">
+          {/* 기술 선택 */}
+          <div className="flex items-center gap-4">
+            <h3 className="text-[18px] fontMedium text-[#333333]">
+              기술 선택
+            </h3>
+
+            <div className="flex gap-3">
+              {techStacks[selectedCategory]?.map(tech => (
+                <button
+                  key={tech}
+                  onClick={() => handleTechStackSelect(tech)}
+                  className={`
+                    px-4 py-0.5 rounded-full fontMedium transition-all
+                    ${
+                      current === tech
+                        ? 'bg-[#EFF5FF] text-[#333333]'
+                        : 'border border-[#D7DCE5] text-[#5C667B]'
+                    }
+                  `}
+                >
+                  {tech}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* DB 선택 (백엔드일 때만) */}
+          {selectedCategory === 'backend' && (
             <div className="flex items-center gap-4">
               <h3 className="text-[18px] fontMedium text-[#333333]">
-                기술 선택
+                DB
               </h3>
 
               <div className="flex gap-3">
-                {techStacks[selectedCategory]?.map(tech => (
+                {dbStacks.map(db => (
                   <button
-                    key={tech}
-                    onClick={() => handleTechStackSelect(tech)}
+                    key={db}
+                    onClick={() => handleDBSelect(db)}
                     className={`
                       px-4 py-0.5 rounded-full fontMedium transition-all
                       ${
-                        current === tech
+                        techStack.backend?.database === db
                           ? 'bg-[#EFF5FF] text-[#333333]'
                           : 'border border-[#D7DCE5] text-[#5C667B]'
                       }
                     `}
                   >
-                    {tech}
+                    {db}
                   </button>
                 ))}
               </div>
             </div>
-
-            {/* DB 선택 */}
-            {selectedCategory === 'backend' && (
-              <div className="flex items-center gap-4">
-                <h3 className="text-[18px] fontMedium text-[#333333]">
-                  DB
-                </h3>
-
-                <div className="flex gap-3">
-                  {dbStacks.map(db => (
-                    <button
-                      key={db}
-                      onClick={() => handleDBSelect(db)}
-                      className={`
-                        px-4 py-0.5 rounded-full fontMedium transition-all
-                        ${
-                          techStack.backend?.database === db
-                            ? 'bg-[#EFF5FF] text-[#333333]'
-                            : 'border border-[#D7DCE5] text-[#5C667B]'
-                        }
-                      `}
-                    >
-                      {db}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
-        {selectedTechStack ? (
-          <div className="mx-10 mt-6">{renderGuide()}</div>
-        ) : (
-          <div className="flex items-center justify-center min-h-[300px] text-[#666666]">
-            기술 스택을 선택해주세요
-          </div>
-        )}
+        {/* 가이드 렌더링 */}
+        <div className="mt-6">
+          {!selectedTechStack ? (
+            <div className="flex items-center justify-center min-h-[300px] text-[#666666]">
+              기술 스택을 선택해주세요
+            </div>
+          ) : selectedTechStack === 'Node.js' ? (
+            // Node.js인 경우 JavaScript와 TypeScript 토글로 표시
+            <div className="mx-10">
+              {renderLanguageGuide('JavaScript', jsExpanded, () => setJsExpanded(!jsExpanded))}
+              {renderLanguageGuide('TypeScript', tsExpanded, () => setTsExpanded(!tsExpanded))}
+            </div>
+          ) : (
+            // 일반 기술 스택인 경우
+            <div className="mx-10">{renderRegularGuide()}</div>
+          )}
+        </div>
       </div>
     )
   }
