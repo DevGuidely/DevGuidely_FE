@@ -1,17 +1,27 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import MainNav from '../../../components/MainNav'
 import ProgressCategoryDropdown from '../../../components/Button/ProgressCategoryDropdown'
 import TodoListCreateModal from '../../../components/Modal/TodoListCreateModal'
 import { FaLink } from "react-icons/fa6"
-import { MdDeleteOutline } from "react-icons/md"  // 👈 추가
-import { IoMdClose } from "react-icons/io"  // 👈 추가 (x 버튼용)
-import { 
-  frontendCategories, 
-  backendCategories, 
-  contentData,
-  initialCheckedItems 
-} from '../../../data/devDetailData'
+import { MdDeleteOutline } from "react-icons/md"
+import { IoMdClose } from "react-icons/io"
+import { contentData } from '../../../data/devDetailData'
+import {
+  // Design APIs
+  getDevDesignScreen,
+  getDevDesignApi,
+  getDevDesignErd,
+  createDevDesignLink,
+  updateDevDesignLink,
+  
+  // Implementation APIs
+  getDevImplementationTree,
+  createDevCategoryBatch,
+  toggleDevFeature,
+  deleteDevCategory,
+  deleteDevFeature,
+} from '../../../api/project.dev.api'
 
 export default function DevDetail() {
   const location = useLocation()
@@ -20,11 +30,25 @@ export default function DevDetail() {
   const [subCategory, setSubCategory] = useState('screen')
   const [implementationSubCategory, setImplementationSubCategory] = useState('frontend')
   const [isTodoModalOpen, setIsTodoModalOpen] = useState(false)
-  const [checkedItems, setCheckedItems] = useState(initialCheckedItems)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   
-  // TodoList 카테고리 상태 관리 (추가)
-  const [frontendTodos, setFrontendTodos] = useState(frontendCategories)
-  const [backendTodos, setBackendTodos] = useState(backendCategories)
+  // Design 상태
+  const [designLinks, setDesignLinks] = useState({
+    screen: { url: '', memo: '', linkId: null },
+    api: { url: '', memo: '', linkId: null },
+    erd: { url: '', memo: '', linkId: null },
+  })
+  
+  const [tempDesignLinks, setTempDesignLinks] = useState({
+    screen: { url: '', memo: '', linkId: null },
+    api: { url: '', memo: '', linkId: null },
+    erd: { url: '', memo: '', linkId: null },
+  })
+
+  // Implementation 상태
+  const [categories, setCategories] = useState([])
+  const [features, setFeatures] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
   
   const projectInfo = location.state?.projectInfo || {
     id: null,
@@ -34,11 +58,307 @@ export default function DevDetail() {
 
   const projectId = projectInfo.id
 
-  const handleCheckboxChange = (itemId) => {
-    setCheckedItems(prev => ({
+  // 📌 페이지 로드 시 데이터 조회
+  useEffect(() => {
+    if (!projectId) return
+
+    if (mainCategory === 'design') {
+      loadDesignLinks()
+    } else if (mainCategory === 'implementation') {
+      loadImplementationTree()
+    }
+  }, [projectId, mainCategory])
+
+  // 📌 서브카테고리 변경 시 해당 링크 조회
+  useEffect(() => {
+    if (mainCategory === 'design' && projectId) {
+      loadDesignLinks()
+    }
+  }, [subCategory])
+
+  // 🎨 Design Input 변경
+  const handleDesignInputChange = (field, value) => {
+    setDesignLinks(prev => ({
       ...prev,
-      [itemId]: !prev[itemId]
+      [subCategory]: {
+        ...prev[subCategory],
+        [field]: value
+      }
     }))
+    setHasUnsavedChanges(true)
+  }
+
+  // 🆕 임시 저장
+  const handleTempSave = () => {
+    setTempDesignLinks(prev => ({
+      ...prev,
+      [subCategory]: { 
+        ...designLinks[subCategory]
+      }
+    }))
+    console.log('✅ 임시 저장:', subCategory, designLinks[subCategory])
+  }
+
+  // 🆕 서브카테고리 변경 시 확인
+  const handleSubCategoryChangeWithConfirm = async (newSubCategory) => {
+    if (newSubCategory === subCategory) return
+
+    // 변경사항이 있고, 저장되지 않은 경우
+    if (hasUnsavedChanges) {
+      const currentLink = designLinks[subCategory]
+      const hasContent = currentLink.url.trim() !== '' || currentLink.memo.trim() !== ''
+
+      if (hasContent) {
+        const confirmed = window.confirm(
+          '저장하지 않은 내용이 있습니다.\n임시 저장하시겠습니까?\n\n' +
+          '※ 임시 저장을 해도 "저장하기" 버튼을 눌러야 최종 저장됩니다.'
+        )
+
+        if (confirmed) {
+          handleTempSave()
+          alert('임시 저장되었습니다.\n나중에 다시 돌아와서 "저장하기" 버튼을 눌러주세요.')
+        } else {
+          const originalLink = tempDesignLinks[subCategory]
+          if (originalLink && (originalLink.url || originalLink.memo)) {
+            setTempDesignLinks(prev => ({
+              ...prev,
+              [subCategory]: { url: '', memo: '', linkId: currentLink.linkId }
+            }))
+          }
+        }
+      }
+      
+      setHasUnsavedChanges(false)
+    }
+
+    setSubCategory(newSubCategory)
+  }
+
+  // 🎨 Design 링크 조회
+  const loadDesignLinks = async () => {
+    try {
+      setIsLoading(true)
+
+      const tempData = tempDesignLinks[subCategory]
+      const hasTempData = tempData && (tempData.url || tempData.memo)
+
+      if (hasTempData) {
+        const restoreConfirm = window.confirm(
+          '임시 저장된 내용이 있습니다.\n복원하시겠습니까?'
+        )
+
+        if (restoreConfirm) {
+          console.log('✅ 임시 저장 복원:', subCategory, tempData)
+          setDesignLinks(prev => ({
+            ...prev,
+            [subCategory]: { ...tempData }
+          }))
+          setHasUnsavedChanges(true)
+          setIsLoading(false)
+          return
+        } else {
+          setTempDesignLinks(prev => ({
+            ...prev,
+            [subCategory]: { url: '', memo: '', linkId: null }
+          }))
+        }
+      }
+
+      let response
+
+      if (subCategory === 'screen') {
+        response = await getDevDesignScreen({ projectId })
+      } else if (subCategory === 'api') {
+        response = await getDevDesignApi({ projectId })
+      } else if (subCategory === 'erd') {
+        response = await getDevDesignErd({ projectId })
+      }
+
+      const link = response?.links?.[0]
+      
+      if (link) {
+        setDesignLinks(prev => ({
+          ...prev,
+          [subCategory]: {
+            url: link.url || '',
+            memo: link.memo || '',
+            linkId: link.id,
+          }
+        }))
+      } else {
+        setDesignLinks(prev => ({
+          ...prev,
+          [subCategory]: { url: '', memo: '', linkId: null }
+        }))
+      }
+
+      setHasUnsavedChanges(false)
+    } catch (err) {
+      console.error('Design links load error:', err)
+      setDesignLinks(prev => ({
+        ...prev,
+        [subCategory]: { url: '', memo: '', linkId: null }
+      }))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 🎨 Design 링크 저장/수정
+  const handleSaveDesignLink = async () => {
+    try {
+      setIsLoading(true)
+      const currentLink = designLinks[subCategory]
+      
+      const linkTypeMap = {
+        screen: 'screen_spec',
+        api: 'api_spec',
+        erd: 'erd'
+      }
+
+      if (currentLink.linkId) {
+        await updateDevDesignLink({
+          projectId,
+          linkId: currentLink.linkId,
+          payload: {
+            url: currentLink.url,
+            memo: currentLink.memo,
+          }
+        })
+        alert('링크가 수정되었습니다.')
+      } else {
+        const response = await createDevDesignLink({
+          projectId,
+          payload: {
+            linkType: linkTypeMap[subCategory],
+            url: currentLink.url,
+            memo: currentLink.memo,
+            orderIndex: 0,
+          }
+        })
+        
+        setDesignLinks(prev => ({
+          ...prev,
+          [subCategory]: {
+            ...prev[subCategory],
+            linkId: response.id
+          }
+        }))
+        alert('링크가 저장되었습니다.')
+      }
+      
+      setHasUnsavedChanges(false)
+      setTempDesignLinks(prev => ({
+        ...prev,
+        [subCategory]: { url: '', memo: '', linkId: null }
+      }))
+      
+      await loadDesignLinks()
+    } catch (err) {
+      console.error('Design link save error:', err)
+      alert('저장에 실패했습니다.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+  
+  // 🔧 Implementation 트리 조회
+  const loadImplementationTree = async () => {
+    try {
+      setIsLoading(true)
+      const response = await getDevImplementationTree({ projectId })
+      
+      setCategories(response.categories || [])
+      setFeatures(response.features || [])
+    } catch (err) {
+      console.error('Implementation tree load error:', err)
+      setCategories([])
+      setFeatures([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 🔧 TodoList 생성 (모달)
+  const handleCreateTodoList = async (todoListData) => {
+    try {
+      setIsLoading(true)
+      
+      await createDevCategoryBatch({
+        projectId,
+        payload: {
+          categoryTitle: todoListData.category,
+          features: todoListData.tasks,
+          categoryOrderIndex: categories.length,
+        }
+      })
+
+      alert('TodoList가 생성되었습니다.')
+      await loadImplementationTree()
+    } catch (err) {
+      console.error('TodoList create error:', err)
+      alert('TodoList 생성에 실패했습니다.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 🔧 체크박스 토글 (실시간 저장)
+  const handleCheckboxChange = async (featureId, currentStatus) => {
+    try {
+      setFeatures(prev => prev.map(f => 
+        f.id === featureId ? { ...f, isCompleted: !currentStatus } : f
+      ))
+
+      await toggleDevFeature({
+        projectId,
+        featureId,
+        payload: { isCompleted: !currentStatus }
+      })
+    } catch (err) {
+      console.error('Toggle feature error:', err)
+      setFeatures(prev => prev.map(f => 
+        f.id === featureId ? { ...f, isCompleted: currentStatus } : f
+      ))
+      alert('체크 상태 변경에 실패했습니다.')
+    }
+  }
+
+  // 🔧 카테고리 삭제
+  const handleDeleteCategory = async (categoryId) => {
+    const category = categories.find(c => c.id === categoryId)
+    if (!window.confirm(`"${category?.title}" 카테고리를 삭제하시겠습니까?`)) {
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      await deleteDevCategory({ projectId, categoryId })
+      
+      alert('카테고리가 삭제되었습니다.')
+      await loadImplementationTree()
+    } catch (err) {
+      console.error('Delete category error:', err)
+      alert('카테고리 삭제에 실패했습니다.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 🔧 기능 삭제
+  const handleDeleteTask = async (featureId) => {
+    try {
+      setIsLoading(true)
+      await deleteDevFeature({ projectId, featureId })
+      
+      setFeatures(prev => prev.filter(f => f.id !== featureId))
+    } catch (err) {
+      console.error('Delete feature error:', err)
+      alert('기능 삭제에 실패했습니다.')
+      await loadImplementationTree()
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleExampleToggle = () => {
@@ -54,60 +374,23 @@ export default function DevDetail() {
     }
   }
 
-  const handleSubCategoryChange = (category) => {
-    setSubCategory(category)
-  }
-
   const handleImplementationSubCategoryChange = (category) => {
     setImplementationSubCategory(category)
   }
 
-  const handleCreateTodoList = (todoListData) => {
-    console.log('새로운 TodoList:', todoListData)
-    // 여기서 API 호출하거나 상태 업데이트
-  }
-
-  // 카테고리 삭제 핸들러 (추가)
-  const handleDeleteCategory = (categoryTitle) => {
-    if (window.confirm(`"${categoryTitle}" 카테고리를 삭제하시겠습니까?`)) {
-      if (implementationSubCategory === 'frontend') {
-        setFrontendTodos(prev => prev.filter(cat => cat.title !== categoryTitle))
-      } else {
-        setBackendTodos(prev => prev.filter(cat => cat.title !== categoryTitle))
-      }
-    }
-  }
-
-  // 기능 삭제 핸들러 (추가)
-  const handleDeleteTask = (categoryTitle, taskId) => {
-    if (implementationSubCategory === 'frontend') {
-      setFrontendTodos(prev => prev.map(cat => {
-        if (cat.title === categoryTitle) {
-          return {
-            ...cat,
-            items: cat.items.filter(item => item.id !== taskId)
-          }
-        }
-        return cat
-      }))
-    } else {
-      setBackendTodos(prev => prev.map(cat => {
-        if (cat.title === categoryTitle) {
-          return {
-            ...cat,
-            items: cat.items.filter(item => item.id !== taskId)
-          }
-        }
-        return cat
-      }))
-    }
+  const getCategoriesWithFeatures = () => {
+    return categories.map(category => ({
+      ...category,
+      items: features.filter(f => f.categoryId === category.id)
+    }))
   }
 
   const getCurrentTodoCategories = () => {
-    return implementationSubCategory === 'frontend' ? frontendTodos : backendTodos
+    return getCategoriesWithFeatures()
   }
 
   const currentContent = contentData[subCategory]
+  const currentDesignLink = designLinks[subCategory]
   
   return (
     <div className="flex flex-col items-center mb-10">
@@ -135,32 +418,56 @@ export default function DevDetail() {
         </div>
 
         <div id="container" className='flex flex-col justify-start w-9/12 h-fit p-8 mx-20 mt-[4%] bg-white shadow-2xl rounded-3xl overflow-y-auto'>
+          {isLoading && (
+            <div className="py-4 text-center text-gray-500">로딩 중...</div>
+          )}
+
           {mainCategory === 'design' ? (
             <DesignSection
               subCategory={subCategory}
               currentContent={currentContent}
+              currentDesignLink={currentDesignLink}
               isExampleExpanded={isExampleExpanded}
-              onSubCategoryChange={handleSubCategoryChange}
+              onSubCategoryChange={handleSubCategoryChangeWithConfirm}
               onExampleToggle={handleExampleToggle}
+              onInputChange={handleDesignInputChange}
+              hasUnsavedChanges={hasUnsavedChanges}
             />
           ) : (
             <ImplementationSection
               implementationSubCategory={implementationSubCategory}
-              checkedItems={checkedItems}
               todoCategories={getCurrentTodoCategories()}
+              features={features}
               onSubCategoryChange={handleImplementationSubCategoryChange}
               onCheckboxChange={handleCheckboxChange}
               onOpenModal={() => setIsTodoModalOpen(true)}
-              onDeleteCategory={handleDeleteCategory}  // 👈 추가
-              onDeleteTask={handleDeleteTask}  // 👈 추가
+              onDeleteCategory={handleDeleteCategory}
+              onDeleteTask={handleDeleteTask}
             />
           )}
 
-          <div className="flex justify-end mt-6">
-            <button className="px-5 py-1.5 rounded-2xl text-[14px] fontRegular bg-[#DFE7F4] text-[#000] hover:opacity-80">
-              저장하기
-            </button>
-          </div>
+          {mainCategory === 'design' && (
+            <div className="flex justify-end gap-3 mt-6">
+              {/* 🆕 변경사항 표시 */}
+              {hasUnsavedChanges && (
+                <span className="text-[12px] text-orange-500 self-center">
+                  ⚠ 저장되지 않은 변경사항이 있습니다
+                </span>
+              )}
+              
+              <button 
+                onClick={handleSaveDesignLink}
+                disabled={isLoading || !currentDesignLink.url}
+                className={`px-5 py-1.5 rounded-2xl text-[14px] fontRegular ${
+                  isLoading || !currentDesignLink.url
+                    ? 'bg-gray-300 cursor-not-allowed'
+                    : 'bg-[#DFE7F4] text-[#000] hover:opacity-80'
+                }`}
+              >
+                {isLoading ? '저장 중...' : '저장하기'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -200,10 +507,12 @@ const CategoryButton = ({ label, isActive, onClick }) => (
   </div>
 )
 
-const InputField = ({ placeholder }) => (
+const InputField = ({ placeholder, value, onChange }) => (
   <input
     type="text"
     placeholder={placeholder}
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
     className='flex w-full justify-between p-6 mb-3 mt-2 overflow-x-auto outline-none text-sm text-[#676767] bg-[#F8F9FA] rounded-2xl'
   />
 )
@@ -211,9 +520,11 @@ const InputField = ({ placeholder }) => (
 const DesignSection = ({ 
   subCategory, 
   currentContent, 
+  currentDesignLink,
   isExampleExpanded, 
   onSubCategoryChange, 
-  onExampleToggle 
+  onExampleToggle,
+  onInputChange 
 }) => (
   <>
     <div className='flex items-center gap-5'>
@@ -236,12 +547,20 @@ const DesignSection = ({
 
     <div className='flex flex-col mt-[3%]'>
       <div className='flex ml-5 fontMedium'>{currentContent.title}</div>
-      <InputField placeholder={currentContent.placeholder} />
+      <InputField 
+        placeholder={currentContent.placeholder} 
+        value={currentDesignLink?.url || ''}
+        onChange={(value) => onInputChange('url', value)}
+      />
     </div>
 
     <div className='flex flex-col mt-[3%]'>
       <div className='flex ml-5 fontMedium'>메모</div>
-      <InputField placeholder={currentContent.memoPlaceholder} />
+      <InputField 
+        placeholder={currentContent.memoPlaceholder} 
+        value={currentDesignLink?.memo || ''}
+        onChange={(value) => onInputChange('memo', value)}
+      />
     </div>
 
     <div className='flex flex-col mt-[3%] p-6 mb-3 overflow-x-auto bg-[#F8F9FA] rounded-2xl'>
@@ -292,13 +611,13 @@ const DesignSection = ({
 
 const ImplementationSection = ({ 
   implementationSubCategory, 
-  checkedItems, 
-  todoCategories, 
+  todoCategories,
+  features,
   onSubCategoryChange, 
   onCheckboxChange, 
   onOpenModal,
-  onDeleteCategory,  // 👈 추가
-  onDeleteTask  // 👈 추가
+  onDeleteCategory,
+  onDeleteTask
 }) => (
   <div className='flex flex-col justify-start h-fit max-h-[55vh]'>
     <div className='flex items-center justify-between w-full text-[#999] fontMedium'>
@@ -328,57 +647,63 @@ const ImplementationSection = ({
         scrollbarWidth: 'thin',
         scrollbarColor: '#C0C0C0 #f0f0f0',
       }}>
-      {todoCategories.map((category) => (
-        <div key={category.title} className='flex-shrink-0 bg-[#F7F7F7] p-5 rounded-xl w-64'>
-          {/* 카테고리 헤더 with 삭제 버튼 */}
-          <div className='flex items-center justify-between mb-4'>
-            <div className='fontMedium text-[16px] text-[#333]'>{category.title}</div>
-            <button
-              onClick={() => onDeleteCategory(category.title)}
-              className='text-[#999] hover:text-[#ff4444] transition-colors'
-            >
-              <MdDeleteOutline size={20} />
-            </button>
-          </div>
-
-          <div 
-            className='space-y-3 max-h-[30vh] overflow-y-auto pr-2'
-            style={{
-              scrollbarWidth: 'thin',
-              scrollbarColor: '#C0C0C0 transparent',
-            }}
-          >
-            {category.items.map((item) => (
-              <div key={item.id} className='flex items-center justify-between gap-2 group'>
-                <div className='flex items-center flex-1 gap-3'>
-                  <input
-                    type="checkbox"
-                    id={item.id}
-                    checked={checkedItems[item.id] || false}
-                    onChange={() => onCheckboxChange(item.id)}
-                    className='w-4 h-4 text-[#B0ADFF] border-2 border-[#D7DCE5] rounded focus:ring-[#B0ADFF]'
-                  />
-                  <label 
-                    htmlFor={item.id} 
-                    className={`text-[14px] cursor-pointer ${
-                      checkedItems[item.id] ? 'line-through text-[#999]' : 'text-[#666]'
-                    }`}
-                  >
-                    {item.label}
-                  </label>
-                </div>
-                {/* 기능 삭제 버튼 (호버 시 표시) */}
-                <button
-                  onClick={() => onDeleteTask(category.title, item.id)}
-                  className='opacity-0 group-hover:opacity-100 text-[#999] hover:text-[#ff4444] transition-all flex-shrink-0'
-                >
-                  <IoMdClose size={16} />
-                </button>
-              </div>
-            ))}
-          </div>
+      {todoCategories.length === 0 ? (
+        <div className='w-full py-10 text-center text-gray-500'>
+          TodoList를 생성해주세요.
         </div>
-      ))}
+      ) : (
+        todoCategories.map((category) => (
+          <div key={category.id} className='flex-shrink-0 bg-[#F7F7F7] p-5 rounded-xl w-64'>
+            {/* 카테고리 헤더 with 삭제 버튼 */}
+            <div className='flex items-center justify-between mb-4'>
+              <div className='fontMedium text-[16px] text-[#333]'>{category.title}</div>
+              <button
+                onClick={() => onDeleteCategory(category.id)}
+                className='text-[#999] hover:text-[#ff4444] transition-colors'
+              >
+                <MdDeleteOutline size={20} />
+              </button>
+            </div>
+
+            <div 
+              className='space-y-3 max-h-[30vh] overflow-y-auto pr-2'
+              style={{
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#C0C0C0 transparent',
+              }}
+            >
+              {category.items.map((item) => (
+                <div key={item.id} className='flex items-center justify-between gap-2 group'>
+                  <div className='flex items-center flex-1 gap-3'>
+                    <input
+                      type="checkbox"
+                      id={`feature-${item.id}`}
+                      checked={item.isCompleted || false}
+                      onChange={() => onCheckboxChange(item.id, item.isCompleted)}
+                      className='w-4 h-4 text-[#B0ADFF] border-2 border-[#D7DCE5] rounded focus:ring-[#B0ADFF]'
+                    />
+                    <label 
+                      htmlFor={`feature-${item.id}`}
+                      className={`text-[14px] cursor-pointer ${
+                        item.isCompleted ? 'line-through text-[#999]' : 'text-[#666]'
+                      }`}
+                    >
+                      {item.title}
+                    </label>
+                  </div>
+                  {/* 기능 삭제 버튼 (호버 시 표시) */}
+                  <button
+                    onClick={() => onDeleteTask(item.id)}
+                    className='opacity-0 group-hover:opacity-100 text-[#999] hover:text-[#ff4444] transition-all flex-shrink-0'
+                  >
+                    <IoMdClose size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      )}
     </div>
 
     <div className='text-xs text-[#999] mt-2 text-center'>
