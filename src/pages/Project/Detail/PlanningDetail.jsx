@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useLocation } from 'react-router-dom'
-import MainNav from '../../components/MainNav'
-import ProgressCategoryDropdown from '../../components/Button/ProgressCategoryDropdown'
+import MainNav from '../../../components/MainNav'
+import ProgressCategoryDropdown from '../../../components/Button/ProgressCategoryDropdown'
+import { savePlanning, getPlanning } from '../../../api/project.step/project.planning.api'
 import { IoMdArrowDropdown } from 'react-icons/io'
-import { savePlanning, getPlanning } from '../../api/project.step/project.planning.api'
 
 export default function PlanningDetail() {
   const { id: projectId } = useParams()

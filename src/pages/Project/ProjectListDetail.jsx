@@ -135,6 +135,7 @@ export default function ProjectListDetail() {
       navigate(`/projectList/${projectId}/dev`, {
         state: {
           projectInfo: {
+            id: projectId,
             name: project?.title || "PROJECT_name",
             description: project?.purpose || "프로젝트 간단 설명"
           },
@@ -189,6 +190,7 @@ export default function ProjectListDetail() {
                 description: project?.purpose,
               },
               selectedCategory: 'frontend',
+              stepKey: 'tech',
             },
           })
           return
@@ -200,6 +202,7 @@ export default function ProjectListDetail() {
 
       if (item === '백') {
         if (selectedTechCategory === '백') {
+          // 두 번째 클릭 시 - 백이 선택된 채로 TechDetail로 이동
           navigate(`/projectList/${projectId}/tech`, {
             state: {
               projectInfo: {
@@ -208,14 +211,17 @@ export default function ProjectListDetail() {
                 description: project?.purpose,
               },
               selectedCategory: 'backend',
+              stepKey: 'tech',
             },
           })
           return
         }
 
+        // 첫 번째 클릭 시 - 선택 상태로 변경
         setSelectedTechCategory('백')
         setSelectedSubCategory('')
-      }} else {
+      }
+    } else {
       alert(`${PROJECT_STAGES.find(s => s.id === stageId)?.title} 단계는 준비 중입니다.`)
     }
   }

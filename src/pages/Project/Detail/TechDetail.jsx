@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import MainNav from '../../components/MainNav'
-import ProgressCategoryDropdown from '../../components/Button/ProgressCategoryDropdown'
 import { useLocation } from 'react-router-dom'
-import { techGuides } from '../../data/techGuides'
-import { IoMdArrowDropdown } from "react-icons/io";
+import MainNav from '../../../components/MainNav'
+import ProgressCategoryDropdown from '../../../components/Button/ProgressCategoryDropdown'
+import { techGuides } from '../../../data/techGuides'
+import { getTech, saveTech } from '../../../api/project.step/project.tech.api';
 import { FaLink } from "react-icons/fa6";
 import { TbCopy } from "react-icons/tb";
-import { getTech, saveTech } from '../../api/project.step/project.tech.api';
+import { IoMdArrowDropdown } from "react-icons/io";
 
 export default function TechDetail() {
   const location = useLocation()
@@ -49,19 +49,28 @@ export default function TechDetail() {
             setJsExpanded(techData.backend.toggleStates.jsExpanded ?? true)
             setTsExpanded(techData.backend.toggleStates.tsExpanded ?? false)
           }
+        }
 
-          if (initialCategory === 'frontend' && techData.frontend?.framework) {
-            setSelectedCategory('frontend')
-            setSelectedTechStack(techData.frontend.framework)
-          }
-
-          if (initialCategory === 'backend' && techData.backend?.framework) {
-            setSelectedCategory('backend')
-            setSelectedTechStack(techData.backend.framework)
+        // initialCategory가 있으면 무조건 설정 (저장된 데이터와 무관하게)
+        if (initialCategory) {
+          setSelectedCategory(initialCategory)
+          
+          if (initialCategory === 'frontend') {
+            // 저장된 프론트엔드 기술이 있으면 설정, 없으면 빈 문자열
+            setSelectedTechStack(techData?.frontend?.framework || '')
+          } else if (initialCategory === 'backend') {
+            // 저장된 백엔드 기술이 있으면 설정, 없으면 빈 문자열
+            setSelectedTechStack(techData?.backend?.framework || '')
           }
         }
       } catch (error) {
         console.error('Failed to fetch data:', error)
+        
+        // 에러가 발생해도 initialCategory는 설정
+        if (initialCategory) {
+          setSelectedCategory(initialCategory)
+          setSelectedTechStack('')
+        }
       }
     }
 
