@@ -174,7 +174,8 @@ export default function DevDetail() {
   const contentData = {
     screen: {
       title: '나의 화면 설계서',
-      placeholder: '서비스에 꼭 있어야 할 핵심 기능을 정의 하세요.',
+      placeholder: 'https://nodejs.org/ko',
+      memoPlaceholder: '서비스에 꼭 있어야 할 핵심 기능을 정의 하세요.',
       exampleTitle: '화면 설계서 예시',
       exampleContent: (
         <div className='flex justify-between'>
@@ -196,7 +197,8 @@ export default function DevDetail() {
     },
     api: {
       title: '나의 API 명세서',
-      placeholder: 'API 설계에 대한 메모를 작성하세요.',
+      placeholder: 'https://nodejs.org/ko',
+      memoPlaceholder: 'API 설계에 대한 메모를 작성하세요.',
       exampleTitle: 'API 명세서 예시',
       exampleContent: (
         <div className='flex flex-col'>
@@ -236,7 +238,8 @@ export default function DevDetail() {
     },
     erd: {
       title: '나의 ERD',
-      placeholder: 'ERD 설계에 대한 메모를 작성하세요.',
+      placeholder: 'https://nodejs.org/ko',
+      memoPlaceholder: 'ERD 설계에 대한 메모를 작성하세요.',
       exampleTitle: 'ERD 예시',
       exampleContent: (
         <div className='flex justify-between'>
@@ -333,16 +336,15 @@ export default function DevDetail() {
 
               <div className='flex flex-col mt-[3%]'>
                 <div className='flex ml-5 fontMedium'>{currentContent.title}</div>
-                <pre className="flex w-full justify-between p-6 mb-3 mt-2 overflow-x-auto text-sm text-[#676767] bg-[#F8F9FA] rounded-2xl">
-                  https://nodejs.org/ko
-                  <TbCopy className="text-[18px] text-[#CACACA] cursor-pointer hover:text-[#999]"/>
-                </pre>
+                <InputField
+                  placeholder={currentContent.placeholder}
+                />
               </div>
 
               <div className='flex flex-col mt-[3%]'>
                 <div className='flex ml-5 fontMedium'>메모</div>
                 <InputField
-                  placeholder={currentContent.placeholder}
+                  placeholder={currentContent.memoPlaceholder}
                 />
               </div>
 
@@ -467,6 +469,13 @@ export default function DevDetail() {
               </div>
             </div>
           )}
+
+          <div className="flex justify-end mt-6">
+            <div
+              className={`px-5 py-1.5 rounded-2xl text-[14px] fontRegular bg-[#DFE7F4] text-[#000] hover:opacity-80'`}>
+              저장하기
+            </div>
+          </div>
         </div>
       </div>
     </div>
