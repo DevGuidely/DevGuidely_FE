@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import MainNav from '../../../components/MainNav'
 import ProgressCategoryDropdown from '../../../components/Button/ProgressCategoryDropdown'
+import TodoListCreateModal from '../../../components/Modal/TodoListCreateModal'
 import { TbCopy } from "react-icons/tb";
 import { FaLink } from "react-icons/fa6";
 
@@ -11,6 +12,7 @@ export default function DevDetail() {
   const [mainCategory, setMainCategory] = useState('design')
   const [subCategory, setSubCategory] = useState('screen')
   const [implementationSubCategory, setImplementationSubCategory] = useState('frontend')
+  const [isTodoModalOpen, setIsTodoModalOpen] = useState(false)
   
   const projectInfo = location.state?.projectInfo || {
     id: null,
@@ -157,6 +159,12 @@ export default function DevDetail() {
       ]
     }
   ]
+
+  const handleCreateTodoList = (todoListData) => {
+    console.log('새로운 TodoList:', todoListData)
+    // 여기서 API 호출하거나 상태 업데이트
+    // todoListData = { category: '메인 페이지', tasks: ['헤더', '로그인'] }
+  }
 
   // 현재 선택된 카테고리에 따른 데이터 선택
   const getCurrentTodoCategories = () => {
@@ -401,9 +409,17 @@ export default function DevDetail() {
 
                 <div
                   className="text-[12px] text-[#000] bg-project-create fontRegular px-4 py-1 rounded-2xl cursor-pointer hover:opacity-50"
+                  onClick={() => setIsTodoModalOpen(true)}
                 >
                   + TodoList 생성
                 </div>
+
+                {/* TodoList 생성 모달 */}
+                <TodoListCreateModal
+                  isOpen={isTodoModalOpen}
+                  onClose={() => setIsTodoModalOpen(false)}
+                  onCreate={handleCreateTodoList}
+                />
               </div>
               
              {/* TodoList 내용 */}
