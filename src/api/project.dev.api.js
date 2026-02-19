@@ -1,4 +1,4 @@
-import api from "../api.js";
+import api from "./api.js";
 
 /* =====================================================
    Dev - Design (설계) : type별 조회 + 저장/수정
@@ -43,7 +43,7 @@ export async function getDevDesignErd({ projectId }) {
 
 // 설계 링크 추가
 // POST /projects/:id/steps/dev/design/links
-// payload: { linkType: 'screen_spec'|'api_spec'|'erd', label?: string, url: string, orderIndex?: number }
+// payload: { linkType: 'screen_spec'|'api_spec'|'erd', url: string, memo?: string, orderIndex?: number }
 export async function createDevDesignLink({ projectId, payload }) {
   try {
     const res = await api.post(`/projects/${projectId}/steps/dev/design/links`, payload);
@@ -62,7 +62,7 @@ export async function createDevDesignLink({ projectId, payload }) {
 
 // 설계 링크 수정
 // PATCH /projects/:id/steps/dev/design/links/:linkId
-// payload: { linkType?, label?, url?, orderIndex? }
+// payload: { linkType?, url?, memo?, orderIndex? }
 export async function updateDevDesignLink({ projectId, linkId, payload }) {
   try {
     const res = await api.patch(
