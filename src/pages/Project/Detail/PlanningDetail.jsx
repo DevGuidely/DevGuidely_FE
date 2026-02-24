@@ -4,6 +4,7 @@ import MainNav from '../../../components/MainNav'
 import ProgressCategoryDropdown from '../../../components/Button/ProgressCategoryDropdown'
 import { savePlanning, getPlanning } from '../../../api/project.step/project.planning.api'
 import { IoMdArrowDropdown } from 'react-icons/io'
+import BreadcrumbNav from '../../../components/BreadcrumbNav';
 
 export default function PlanningDetail() {
   const { id: projectId } = useParams()
@@ -297,6 +298,8 @@ export default function PlanningDetail() {
     <div className="flex flex-col items-center mb-10">
       <MainNav />
 
+      <BreadcrumbNav projectName={projectInfo.name} className='mt-5 ml-44' />
+      
       <ProjectHeader 
         projectName={projectInfo.name} 
         projectId={projectId}

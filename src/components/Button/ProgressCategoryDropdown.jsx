@@ -21,7 +21,6 @@ export default function ProgressCategoryDropdown({
   useEffect(() => {
     
     if (!projectId || !stepKey) {
-      console.log('❌ Missing projectId or stepKey')
       return
     }
 
@@ -68,13 +67,11 @@ export default function ProgressCategoryDropdown({
 
   const handleSelect = async (key) => {
     if (isLoading || !projectId || !stepKey) {
-      console.log('⚠️ handleSelect blocked:', { isLoading, projectId, stepKey })
       return
     }
 
     try {
       setIsLoading(true)
-      console.log(`🔄 Updating ${stepKey} status to:`, key)
       
       const result = await updateProjectStepStatusApi({
         projectId,
@@ -83,12 +80,10 @@ export default function ProgressCategoryDropdown({
       })
       
       console.log('✅ Update result:', result)
-      
+
       setSelectedKey(key)
       setIsOpen(false)
-      console.log(`✅ ${stepKey} status updated successfully to:`, key)
     } catch (error) {
-      console.error(`❌ Failed to update ${stepKey} status:`, error)
       console.error('❌ Update error details:', {
         message: error.message,
         status: error.response?.status,
@@ -98,15 +93,7 @@ export default function ProgressCategoryDropdown({
       setIsLoading(false)
     }
   }
-
-  console.log('🔍 Current render state:', { 
-    projectId, 
-    stepKey, 
-    selectedKey, 
-    selectedLabel: selected.label,
-    isLoading 
-  })
-
+  
   return (
     <div ref={ref} className="flex items-center gap-1">
       <div className="relative">

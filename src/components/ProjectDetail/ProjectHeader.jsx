@@ -8,13 +8,13 @@ export default function ProjectHeader({ title, description, date }) {
         <div className='flex fontBold text-[40px]'>
           {title}
         </div>
-        <div className='flex fontMedium text-[16px]'>
+        <div className='flex fontRegular text-[16px]'>
           {description}
         </div>
       </div>
       
       <div className='flex justify-end mr-20'>
-        <div className='flex fontRegular text-[#363636] text-[14px]'>
+        <div className='flex fontLight text-[#363636] text-[14px]'>
           {date}
         </div>
       </div>
