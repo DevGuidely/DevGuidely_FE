@@ -430,12 +430,6 @@ export default function DevDetail() {
 
     try {
       setIsLoading(true)
-      
-      console.log('🗑️ Deleting category:', {
-        projectId,
-        categoryId,
-        phase: implementationSubCategory
-      })
 
       await deleteDevCategory({ 
         projectId, 
@@ -457,12 +451,6 @@ export default function DevDetail() {
   const handleDeleteTask = async (featureId) => {
     try {
       setIsLoading(true)
-      
-      console.log('🗑️ Deleting feature:', {
-        projectId,
-        featureId,
-        phase: implementationSubCategory
-      })
 
       await deleteDevFeature({ 
         projectId, 
@@ -520,10 +508,7 @@ export default function DevDetail() {
     <div className="flex flex-col items-center mb-10">
       <MainNav />
 
-      {/* BreadcrumbNav를 왼쪽으로 정렬 */}
-      <div className="w-full px-24 mt-5">
-        <BreadcrumbNav projectName={projectInfo.name} />
-      </div>
+      <BreadcrumbNav projectName={projectInfo.name} className='flex pl-20 mt-5' />
 
       <ProjectHeader 
         projectName={projectInfo.name} 
