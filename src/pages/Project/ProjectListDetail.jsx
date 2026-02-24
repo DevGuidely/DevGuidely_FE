@@ -426,7 +426,7 @@ export default function ProjectListDetail() {
         <ProjectHeader {...headerProps} />
       </div>
 
-      <BreadcrumbNav projectName={headerProps.title} className='flex ml-20' />
+      <BreadcrumbNav projectName={headerProps.title} className='flex pl-20' />
 
       <div className='relative z-10 flex w-full gap-8 px-16 pb-20 mt-14'>
         {/* 왼쪽: 단계 선택 */}

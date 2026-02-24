@@ -298,7 +298,8 @@ export default function PlanningDetail() {
     <div className="flex flex-col items-center mb-10">
       <MainNav />
 
-      <BreadcrumbNav projectName={projectInfo.name} className='mt-5 ml-44' />
+      <BreadcrumbNav projectName={projectInfo.name} className='flex pl-20 mt-5' />
+
       
       <ProjectHeader 
         projectName={projectInfo.name} 
