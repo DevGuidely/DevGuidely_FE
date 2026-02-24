@@ -62,7 +62,6 @@ export default function ProjectCard({ project, onProjectClick, onDelete, onEdit,
                 : 'text-[#838383] hover:text-red-500 cursor-pointer'
             }`}
             onClick={(e) => {
-              console.log('🗑️ 삭제 버튼 클릭')
               e.stopPropagation();
               if (!isDeleting) {
                 onDelete(project.id, project.title);

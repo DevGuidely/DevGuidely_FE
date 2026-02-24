@@ -43,7 +43,7 @@ export async function getDevDesignErd({ projectId }) {
 
 // 설계 링크 추가
 // POST /projects/:id/steps/dev/design/links
-// payload: { linkType: 'screen_spec'|'api_spec'|'erd', url: string, memo?: string, orderIndex?: number }
+// payload: { linkType: 'screen_spec'|'api_spec'|'erd', url: string, memo?: string, orderIndex?: number, phase?: 'Frontend'|'Backend' }
 export async function createDevDesignLink({ projectId, payload }) {
   try {
     const res = await api.post(`/projects/${projectId}/steps/dev/design/links`, payload);
@@ -62,7 +62,7 @@ export async function createDevDesignLink({ projectId, payload }) {
 
 // 설계 링크 수정
 // PATCH /projects/:id/steps/dev/design/links/:linkId
-// payload: { linkType?, url?, memo?, orderIndex? }
+// payload: { linkType?, url?, memo?, orderIndex?, phase? }
 export async function updateDevDesignLink({ projectId, linkId, payload }) {
   try {
     const res = await api.patch(
@@ -86,16 +86,21 @@ export async function updateDevDesignLink({ projectId, linkId, payload }) {
    Dev - Implementation (구현) : tree 조회 + 배치 생성 + 토글 + 삭제
 ===================================================== */
 
-// 구현 트리 조회 (카테고리 배열 + 기능 배열)
-// GET /projects/:id/steps/dev/implementation/tree
-export async function getDevImplementationTree({ projectId }) {
+// 구현 트리 조회 (카테고리 배열 + 기능 배열) - phase별로 조회
+// GET /projects/:id/steps/dev/implementation/tree?phase=Frontend|Backend
+export async function getDevImplementationTree({ projectId, phase }) {
   try {
+    // phase를 쿼리 파라미터로 추가
+    const params = phase ? { phase } : {};
+    
     const res = await api.get(
-      `/projects/${projectId}/steps/dev/implementation/tree`
+      `/projects/${projectId}/steps/dev/implementation/tree`,
+      { params }
     );
     return res.data;
   } catch (err) {
     console.error("getDevImplementationTree error:", err);
+    console.error("params:", { projectId, phase });
     throw new Error(
       err.response?.data?.message || "Dev implementation tree fetch failed"
     );
@@ -104,7 +109,7 @@ export async function getDevImplementationTree({ projectId }) {
 
 // 카테고리 + 기능 n개 배치 생성(모달 완료 버튼용)
 // POST /projects/:id/steps/dev/implementation/categories/batch
-// payload: { categoryTitle: string, features: string[], categoryOrderIndex?: number }
+// payload: { categoryTitle: string, features: string[], categoryOrderIndex?: number, phase: 'Frontend'|'Backend' }
 export async function createDevCategoryBatch({ projectId, payload }) {
   try {
     const res = await api.post(
@@ -126,9 +131,9 @@ export async function createDevCategoryBatch({ projectId, payload }) {
   }
 }
 
-// 기능 체크 토글
+// 기능 체크 토글 - phase 추가
 // PATCH /projects/:id/steps/dev/implementation/features/:featureId/toggle
-// payload: { isCompleted: boolean }
+// payload: { isCompleted: boolean, phase?: 'Frontend'|'Backend' }
 export async function toggleDevFeature({ projectId, featureId, payload }) {
   try {
     const res = await api.patch(
@@ -150,12 +155,16 @@ export async function toggleDevFeature({ projectId, featureId, payload }) {
   }
 }
 
-// 카테고리 삭제 (하위 기능 cascade 삭제)
-// DELETE /projects/:id/steps/dev/implementation/categories/:categoryId
-export async function deleteDevCategory({ projectId, categoryId }) {
+// 카테고리 삭제 (하위 기능 cascade 삭제) - phase 추가
+// DELETE /projects/:id/steps/dev/implementation/categories/:categoryId?phase=Frontend|Backend
+export async function deleteDevCategory({ projectId, categoryId, phase }) {
   try {
+    // phase를 쿼리 파라미터로 추가
+    const params = phase ? { phase } : {};
+    
     const res = await api.delete(
-      `/projects/${projectId}/steps/dev/implementation/categories/${categoryId}`
+      `/projects/${projectId}/steps/dev/implementation/categories/${categoryId}`,
+      { params }
     );
     return res.data;
   } catch (err) {
@@ -172,12 +181,16 @@ export async function deleteDevCategory({ projectId, categoryId }) {
   }
 }
 
-// 기능 삭제
-// DELETE /projects/:id/steps/dev/implementation/features/:featureId
-export async function deleteDevFeature({ projectId, featureId }) {
+// 기능 삭제 - phase 추가
+// DELETE /projects/:id/steps/dev/implementation/features/:featureId?phase=Frontend|Backend
+export async function deleteDevFeature({ projectId, featureId, phase }) {
   try {
+    // phase를 쿼리 파라미터로 추가
+    const params = phase ? { phase } : {};
+    
     const res = await api.delete(
-      `/projects/${projectId}/steps/dev/implementation/features/${featureId}`
+      `/projects/${projectId}/steps/dev/implementation/features/${featureId}`,
+      { params }
     );
     return res.data;
   } catch (err) {

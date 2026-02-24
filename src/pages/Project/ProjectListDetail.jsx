@@ -6,6 +6,7 @@ import { PROJECT_STAGES } from '../../constants/projectStages'
 import { getProjectsApi } from '../../api/project.api'
 import { getProjectStepStatusApi } from '../../api/status.api'
 import { saveTech, getTech } from '../../api/project.step/project.tech.api'
+import BreadcrumbNav from '../../components/BreadcrumbNav';
 
 const STATUS_COLORS = {
   before: '#FFE7AF',
@@ -424,6 +425,8 @@ export default function ProjectListDetail() {
       <div className='relative z-10 backdrop-blur-sm'>
         <ProjectHeader {...headerProps} />
       </div>
+
+      <BreadcrumbNav projectName={headerProps.title} className='flex ml-20' />
 
       <div className='relative z-10 flex w-full gap-8 px-16 pb-20 mt-14'>
         {/* 왼쪽: 단계 선택 */}

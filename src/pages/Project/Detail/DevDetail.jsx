@@ -7,6 +7,7 @@ import { FaLink } from "react-icons/fa6"
 import { MdDeleteOutline } from "react-icons/md"
 import { IoMdClose } from "react-icons/io"
 import { contentData } from '../../../data/devDetailData'
+import BreadcrumbNav from '../../../components/BreadcrumbNav';
 import {
   // Design APIs
   getDevDesignScreen,
@@ -28,7 +29,7 @@ export default function DevDetail() {
   const [isExampleExpanded, setIsExampleExpanded] = useState(false)
   const [mainCategory, setMainCategory] = useState('design')
   const [subCategory, setSubCategory] = useState('screen')
-  const [implementationSubCategory, setImplementationSubCategory] = useState('frontend')
+  const [implementationSubCategory, setImplementationSubCategory] = useState('Frontend') // Frontend로 기본값 설정
   const [isTodoModalOpen, setIsTodoModalOpen] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   
@@ -45,9 +46,17 @@ export default function DevDetail() {
     erd: { url: '', memo: '', linkId: null },
   })
 
-  // Implementation 상태
-  const [categories, setCategories] = useState([])
-  const [features, setFeatures] = useState([])
+  // Implementation 상태 - Frontend와 Backend를 분리
+  const [frontendData, setFrontendData] = useState({
+    categories: [],
+    features: []
+  })
+  
+  const [backendData, setBackendData] = useState({
+    categories: [],
+    features: []
+  })
+  
   const [isLoading, setIsLoading] = useState(false)
   
   const projectInfo = location.state?.projectInfo || {
@@ -76,6 +85,13 @@ export default function DevDetail() {
     }
   }, [subCategory])
 
+  // 📌 Implementation 서브카테고리 변경 시 데이터 다시 로드
+  useEffect(() => {
+    if (mainCategory === 'implementation' && projectId) {
+      loadImplementationTree()
+    }
+  }, [implementationSubCategory])
+
   // 🎨 Design Input 변경
   const handleDesignInputChange = (field, value) => {
     setDesignLinks(prev => ({
@@ -88,7 +104,6 @@ export default function DevDetail() {
     setHasUnsavedChanges(true)
   }
 
-  // 🆕 임시 저장
   const handleTempSave = () => {
     setTempDesignLinks(prev => ({
       ...prev,
@@ -96,7 +111,21 @@ export default function DevDetail() {
         ...designLinks[subCategory]
       }
     }))
-    console.log('✅ 임시 저장:', subCategory, designLinks[subCategory])
+  }
+
+  // Main Category 변경 핸들러
+  const handleMainCategoryChange = (category) => {
+    setMainCategory(category)
+    if (category === 'design') {
+      setSubCategory('screen')
+    } else if (category === 'implementation') {
+      setImplementationSubCategory('Frontend') // 구현 탭 클릭 시 항상 Frontend가 기본 선택
+    }
+  }
+
+  // Implementation 서브카테고리 변경 핸들러
+  const handleImplementationSubCategoryChange = (category) => {
+    setImplementationSubCategory(category)
   }
 
   // 🆕 서브카테고리 변경 시 확인
@@ -148,7 +177,6 @@ export default function DevDetail() {
         )
 
         if (restoreConfirm) {
-          console.log('✅ 임시 저장 복원:', subCategory, tempData)
           setDesignLinks(prev => ({
             ...prev,
             [subCategory]: { ...tempData }
@@ -266,35 +294,71 @@ export default function DevDetail() {
   const loadImplementationTree = async () => {
     try {
       setIsLoading(true)
-      const response = await getDevImplementationTree({ projectId })
       
-      setCategories(response.categories || [])
-      setFeatures(response.features || [])
+      // 백엔드에서 모든 데이터를 받아옴
+      const response = await getDevImplementationTree({ 
+        projectId,
+        phase: implementationSubCategory
+      })
+      
+      // 🆕 프론트엔드에서 phase별로 필터링
+      const filteredCategories = response.categories?.filter(category => 
+        category.phase === implementationSubCategory || 
+        (!category.phase && implementationSubCategory === 'Frontend') // phase가 없는 기존 데이터는 Frontend로 간주
+      ) || []
+      
+      const categoryIds = filteredCategories.map(cat => cat.id)
+      const filteredFeatures = response.features?.filter(feature => 
+        categoryIds.includes(feature.categoryId)
+      ) || []
+      
+      // 현재 선택된 phase에 따라 데이터 설정
+      if (implementationSubCategory === 'Frontend') {
+        setFrontendData({
+          categories: filteredCategories,
+          features: filteredFeatures
+        })
+      } else if (implementationSubCategory === 'Backend') {
+        setBackendData({
+          categories: filteredCategories,
+          features: filteredFeatures
+        })
+      }
+      
     } catch (err) {
       console.error('Implementation tree load error:', err)
-      setCategories([])
-      setFeatures([])
+      
+      if (implementationSubCategory === 'Frontend') {
+        setFrontendData({ categories: [], features: [] })
+      } else if (implementationSubCategory === 'Backend') {
+        setBackendData({ categories: [], features: [] })
+      }
     } finally {
       setIsLoading(false)
     }
   }
 
-  // 🔧 TodoList 생성 (모달)
+  // 🔧 TodoList 생성 (모달) - phase 추가
   const handleCreateTodoList = async (todoListData) => {
     try {
       setIsLoading(true)
+      
+      const currentCategories = implementationSubCategory === 'Frontend' 
+        ? frontendData.categories 
+        : backendData.categories
       
       await createDevCategoryBatch({
         projectId,
         payload: {
           categoryTitle: todoListData.category,
           features: todoListData.tasks,
-          categoryOrderIndex: categories.length,
+          categoryOrderIndex: currentCategories.length,
+          phase: implementationSubCategory // 'Frontend' 또는 'Backend'
         }
       })
 
       alert('TodoList가 생성되었습니다.')
-      await loadImplementationTree()
+      await loadImplementationTree() // 생성 후 현재 phase 데이터 다시 로드
     } catch (err) {
       console.error('TodoList create error:', err)
       alert('TodoList 생성에 실패했습니다.')
@@ -303,40 +367,84 @@ export default function DevDetail() {
     }
   }
 
-  // 🔧 체크박스 토글 (실시간 저장)
+  // 🔧 체크박스 토글 (실시간 저장) - phase 추가
   const handleCheckboxChange = async (featureId, currentStatus) => {
     try {
-      setFeatures(prev => prev.map(f => 
-        f.id === featureId ? { ...f, isCompleted: !currentStatus } : f
-      ))
+      // UI에서 즉시 업데이트
+      if (implementationSubCategory === 'Frontend') {
+        setFrontendData(prev => ({
+          ...prev,
+          features: prev.features.map(f => 
+            f.id === featureId ? { ...f, isCompleted: !currentStatus } : f
+          )
+        }))
+      } else {
+        setBackendData(prev => ({
+          ...prev,
+          features: prev.features.map(f => 
+            f.id === featureId ? { ...f, isCompleted: !currentStatus } : f
+          )
+        }))
+      }
 
       await toggleDevFeature({
         projectId,
         featureId,
-        payload: { isCompleted: !currentStatus }
+        payload: { 
+          isCompleted: !currentStatus,
+          phase: implementationSubCategory // phase 추가
+        }
       })
     } catch (err) {
       console.error('Toggle feature error:', err)
-      setFeatures(prev => prev.map(f => 
-        f.id === featureId ? { ...f, isCompleted: currentStatus } : f
-      ))
+      
+      // 실패 시 원래 상태로 복원
+      if (implementationSubCategory === 'Frontend') {
+        setFrontendData(prev => ({
+          ...prev,
+          features: prev.features.map(f => 
+            f.id === featureId ? { ...f, isCompleted: currentStatus } : f
+          )
+        }))
+      } else {
+        setBackendData(prev => ({
+          ...prev,
+          features: prev.features.map(f => 
+            f.id === featureId ? { ...f, isCompleted: currentStatus } : f
+          )
+        }))
+      }
+      
       alert('체크 상태 변경에 실패했습니다.')
     }
   }
 
-  // 🔧 카테고리 삭제
+  // 🔧 카테고리 삭제 - phase 추가
   const handleDeleteCategory = async (categoryId) => {
-    const category = categories.find(c => c.id === categoryId)
+    const currentData = implementationSubCategory === 'Frontend' ? frontendData : backendData
+    const category = currentData.categories.find(c => c.id === categoryId)
+    
     if (!window.confirm(`"${category?.title}" 카테고리를 삭제하시겠습니까?`)) {
       return
     }
 
     try {
       setIsLoading(true)
-      await deleteDevCategory({ projectId, categoryId })
+      
+      console.log('🗑️ Deleting category:', {
+        projectId,
+        categoryId,
+        phase: implementationSubCategory
+      })
+
+      await deleteDevCategory({ 
+        projectId, 
+        categoryId, 
+        phase: implementationSubCategory // phase 추가
+      })
       
       alert('카테고리가 삭제되었습니다.')
-      await loadImplementationTree()
+      await loadImplementationTree() // 삭제 후 현재 phase 데이터 다시 로드
     } catch (err) {
       console.error('Delete category error:', err)
       alert('카테고리 삭제에 실패했습니다.')
@@ -345,17 +453,39 @@ export default function DevDetail() {
     }
   }
 
-  // 🔧 기능 삭제
+  // 🔧 기능 삭제 - phase 추가
   const handleDeleteTask = async (featureId) => {
     try {
       setIsLoading(true)
-      await deleteDevFeature({ projectId, featureId })
       
-      setFeatures(prev => prev.filter(f => f.id !== featureId))
+      console.log('🗑️ Deleting feature:', {
+        projectId,
+        featureId,
+        phase: implementationSubCategory
+      })
+
+      await deleteDevFeature({ 
+        projectId, 
+        featureId,
+        phase: implementationSubCategory // phase 추가
+      })
+      
+      // UI에서 즉시 제거
+      if (implementationSubCategory === 'Frontend') {
+        setFrontendData(prev => ({
+          ...prev,
+          features: prev.features.filter(f => f.id !== featureId)
+        }))
+      } else {
+        setBackendData(prev => ({
+          ...prev,
+          features: prev.features.filter(f => f.id !== featureId)
+        }))
+      }
     } catch (err) {
       console.error('Delete feature error:', err)
       alert('기능 삭제에 실패했습니다.')
-      await loadImplementationTree()
+      await loadImplementationTree() // 실패 시 데이터 다시 로드
     } finally {
       setIsLoading(false)
     }
@@ -365,23 +495,16 @@ export default function DevDetail() {
     setIsExampleExpanded(!isExampleExpanded)
   }
 
-  const handleMainCategoryChange = (category) => {
-    setMainCategory(category)
-    if (category === 'design') {
-      setSubCategory('screen')
-    } else if (category === 'implementation') {
-      setImplementationSubCategory('frontend')
-    }
-  }
-
-  const handleImplementationSubCategoryChange = (category) => {
-    setImplementationSubCategory(category)
+  // 현재 선택된 phase의 데이터 가져오기
+  const getCurrentData = () => {
+    return implementationSubCategory === 'Frontend' ? frontendData : backendData
   }
 
   const getCategoriesWithFeatures = () => {
-    return categories.map(category => ({
+    const currentData = getCurrentData()
+    return currentData.categories.map(category => ({
       ...category,
-      items: features.filter(f => f.categoryId === category.id)
+      items: currentData.features.filter(f => f.categoryId === category.id)
     }))
   }
 
@@ -391,10 +514,16 @@ export default function DevDetail() {
 
   const currentContent = contentData[subCategory]
   const currentDesignLink = designLinks[subCategory]
+  const currentData = getCurrentData()
   
   return (
     <div className="flex flex-col items-center mb-10">
       <MainNav />
+
+      {/* BreadcrumbNav를 왼쪽으로 정렬 */}
+      <div className="w-full px-24 mt-5">
+        <BreadcrumbNav projectName={projectInfo.name} />
+      </div>
 
       <ProjectHeader 
         projectName={projectInfo.name} 
@@ -437,7 +566,7 @@ export default function DevDetail() {
             <ImplementationSection
               implementationSubCategory={implementationSubCategory}
               todoCategories={getCurrentTodoCategories()}
-              features={features}
+              features={currentData.features}
               onSubCategoryChange={handleImplementationSubCategoryChange}
               onCheckboxChange={handleCheckboxChange}
               onOpenModal={() => setIsTodoModalOpen(true)}
@@ -480,7 +609,6 @@ export default function DevDetail() {
   )
 }
 
-// 재사용 가능한 컴포넌트들
 const ProjectHeader = ({ projectName, projectId }) => (
   <div className="flex items-center justify-between w-full px-24 mt-5">
     <div className="flex items-center">
@@ -624,13 +752,13 @@ const ImplementationSection = ({
       <div className='flex items-center gap-5'>
         <CategoryButton
           label="프론트 구현"
-          isActive={implementationSubCategory === 'frontend'}
-          onClick={() => onSubCategoryChange('frontend')}
+          isActive={implementationSubCategory === 'Frontend'}
+          onClick={() => onSubCategoryChange('Frontend')}
         />
         <CategoryButton
           label="백 구현"
-          isActive={implementationSubCategory === 'backend'}
-          onClick={() => onSubCategoryChange('backend')}
+          isActive={implementationSubCategory === 'Backend'}
+          onClick={() => onSubCategoryChange('Backend')}
         />
       </div>
 
@@ -654,9 +782,10 @@ const ImplementationSection = ({
       ) : (
         todoCategories.map((category) => (
           <div key={category.id} className='flex-shrink-0 bg-[#F7F7F7] p-5 rounded-xl w-64'>
-            {/* 카테고리 헤더 with 삭제 버튼 */}
             <div className='flex items-center justify-between mb-4'>
-              <div className='fontMedium text-[16px] text-[#333]'>{category.title}</div>
+              <div className='fontMedium text-[16px] text-[#333]'>
+                {category.title}
+              </div>
               <button
                 onClick={() => onDeleteCategory(category.id)}
                 className='text-[#999] hover:text-[#ff4444] transition-colors'
@@ -691,7 +820,6 @@ const ImplementationSection = ({
                       {item.title}
                     </label>
                   </div>
-                  {/* 기능 삭제 버튼 (호버 시 표시) */}
                   <button
                     onClick={() => onDeleteTask(item.id)}
                     className='opacity-0 group-hover:opacity-100 text-[#999] hover:text-[#ff4444] transition-all flex-shrink-0'

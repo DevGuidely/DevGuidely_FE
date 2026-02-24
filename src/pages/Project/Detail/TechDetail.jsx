@@ -7,6 +7,7 @@ import { getTech, saveTech } from '../../../api/project.step/project.tech.api';
 import { FaLink } from "react-icons/fa6";
 import { TbCopy } from "react-icons/tb";
 import { IoMdArrowDropdown } from "react-icons/io";
+import BreadcrumbNav from '../../../components/BreadcrumbNav';
 
 export default function TechDetail() {
   const location = useLocation()
@@ -652,6 +653,8 @@ export default function TechDetail() {
   return (
     <div className="flex flex-col items-center mb-10">
       <MainNav />
+
+      <BreadcrumbNav projectName={projectInfo.name} className='mt-5 ml-44' />
 
       <ProjectHeader 
         projectName={projectInfo.name} 
